@@ -25,7 +25,7 @@ const CTASection = () => {
               : 'scale-90 opacity-0'
           }`}
           style={{
-            transitionDelay: '300ms'
+            transitionDelay: '500ms'
           }}
         >
           <Sparkles className="w-10 h-10 text-white" />
@@ -39,7 +39,7 @@ const CTASection = () => {
               : 'translate-y-10 opacity-0'
           }`}
           style={{
-            transitionDelay: '600ms'
+            transitionDelay: '700ms'
           }}
         >
           Not sure where to{" "}
@@ -56,7 +56,7 @@ const CTASection = () => {
               : 'translate-y-10 opacity-0'
           }`}
           style={{
-            transitionDelay: '900ms'
+            transitionDelay: '1000ms'
           }}
         >
           Let us guide you through personalized assessments and create the perfect roadmap for your career journey.

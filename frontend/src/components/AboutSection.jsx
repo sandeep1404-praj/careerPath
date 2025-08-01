@@ -19,11 +19,11 @@ const AboutSection = () => {
           {/* Left Content */}
           <div 
             ref={leftRef}
-            className={`transition-all duration-1000 ease-smooth ${
-              leftVisible 
-                ? 'translate-x-0 opacity-100' 
-                : '-translate-x-full opacity-0'
-            }`}
+            className={`
+              transition-all duration-1000 ease-smooth
+              opacity-100 translate-x-0
+              lg:${leftVisible ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0'}
+            `}
           >
             <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-8">
               Bridging the{" "}

@@ -73,7 +73,7 @@ const BlogSection = () => {
                   : 'scale-90 opacity-0'
               }`}
               style={{
-                transitionDelay: `${index * 300}ms`
+                transitionDelay: `${index * 400}ms`
               }}
             >
               {/* Image Container */}
