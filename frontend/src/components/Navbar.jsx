@@ -1,12 +1,31 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Button } from "./ui/Button";
 import { useAuth } from '@/contexts/AuthContext';
 
 export function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
+  const location = useLocation();
 
   const handleLogout = () => {
     logout();
+  };
+
+  // Helper function to check if a path is active
+  const isActiveLink = (path) => {
+    if (path === '/') {
+      return location.pathname === '/';
+    }
+    return location.pathname.startsWith(path);
+  };
+
+  // Helper function to get link classes with active state
+  const getLinkClasses = (path, baseClasses = "transition-colors relative") => {
+    const isActive = isActiveLink(path);
+    return `${baseClasses} ${
+      isActive 
+        ? 'text-primary after:absolute after:bottom-[-4px] after:left-0 after:right-0 after:h-0.5 after:bg-primary after:content-[""]' 
+        : 'text-muted-foreground hover:text-primary'
+    }`;
   };
 
   return (
@@ -23,17 +42,29 @@ export function Navbar() {
           {/* Navigation Links */}
           <div className="hidden md:block">
             <div className="ml-10 flex items-baseline space-x-8">
-              <Link to="/" className="text-foreground hover:text-primary transition-colors">
+              <Link 
+                to="/" 
+                className={getLinkClasses('/')}
+              >
                 Home
               </Link>
-              <a href="#about" className="text-muted-foreground hover:text-primary transition-colors">
+              <a 
+                href="#about" 
+                className="text-muted-foreground hover:text-primary transition-colors relative"
+              >
                 About
               </a>
-              <a href="#blogs" className="text-muted-foreground hover:text-primary transition-colors">
+              <a 
+                href="#blogs" 
+                className="text-muted-foreground hover:text-primary transition-colors relative"
+              >
                 Blogs
               </a>
               {isAuthenticated && (
-                <Link to="/dashboard" className="text-muted-foreground hover:text-primary transition-colors">
+                <Link 
+                  to="/dashboard" 
+                  className={getLinkClasses('/dashboard')}
+                >
                   Dashboard
                 </Link>
               )}
