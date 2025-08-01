@@ -36,6 +36,14 @@ export const authAPI = {
     });
   },
 
+  // Login (email & password, no OTP)
+  login: async (credentials) => {
+    return apiRequest('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify(credentials),
+    });
+  },
+
   // Send OTP for login
   sendOtp: async (credentials) => {
     return apiRequest('/auth/send-otp', {
