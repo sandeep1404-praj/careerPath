@@ -8,6 +8,8 @@ import Signup from "./pages/Signup";
 import VerifyEmail from "./pages/VerifyEmail";
 import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
+import ForgotPassword from '@/pages/ForgotPassword';
+import ResetPassword from '@/pages/ResetPassword';
 
 const queryClient = new QueryClient();
 
@@ -28,6 +30,8 @@ const App = () => (
               </ProtectedRoute>
             } 
           />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
@@ -36,4 +40,4 @@ const App = () => (
   </QueryClientProvider>
 );
 
-export default App; 
+export default App;

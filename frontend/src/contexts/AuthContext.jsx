@@ -125,6 +125,26 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Forgot password
+  const forgotPassword = async (email) => {
+    try {
+      const response = await authAPI.forgotPassword(email);
+      return { success: true, message: response.message };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  };
+
+  // Reset password
+  const resetPassword = async ({ token, password }) => {
+    try {
+      const response = await authAPI.resetPassword({ token, password });
+      return { success: true, message: response.message };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  };
+
   const value = {
     user,
     token,
@@ -138,6 +158,8 @@ export const AuthProvider = ({ children }) => {
     logout,
     verifyEmail,
     verifySignupOtp,
+    forgotPassword,
+    resetPassword,
     isAuthenticated: !!user,
   };
 

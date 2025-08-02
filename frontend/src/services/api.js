@@ -100,4 +100,20 @@ export const authAPI = {
       body: JSON.stringify({ email, otp }),
     });
   },
+
+  // Forgot password (request reset link)
+  forgotPassword: async (email) => {
+    return apiRequest('/auth/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
+  },
+
+  // Reset password
+  resetPassword: async ({ token, password }) => {
+    return apiRequest('/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ token, password }),
+    });
+  },
 };
