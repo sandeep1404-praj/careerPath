@@ -6,13 +6,12 @@ import RoadmapPreviewSection from "@/components/RoadmapPreviewSection";
 import BlogSection from "@/components/BlogSection";
 import CTASection from "@/components/CTASection";
 import ChatbotButton from "@/components/ChatbotButton";
-import Footer from "@/components/Footer";
-import { Navbar } from "../components/Navbar";
+// import Footer from "@/components/Footer";
+// import { Navbar } from "../components/Navbar";
 
 const Index = () => {
   return (
     <div className="min-h-screen">
-      <Navbar />
       <HeroSection />
       <AboutSection />
       <FeaturesSection />
@@ -21,7 +20,6 @@ const Index = () => {
       <BlogSection />
       <CTASection />
       <ChatbotButton />
-      <Footer />
     </div>
   );
 };
