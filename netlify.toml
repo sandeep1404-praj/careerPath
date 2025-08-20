@@ -2,6 +2,3 @@
   base = "frontend"
   command = "bun run build"
   publish = "frontend/dist"
-
-[functions]
-  directory = "frontend/netlify/functions"
