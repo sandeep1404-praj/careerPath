@@ -3,6 +3,5 @@
   command = "bun run build"
   publish = "frontend/dist"
 
-# (optional) If you have Netlify Functions
 [functions]
   directory = "frontend/netlify/functions"
