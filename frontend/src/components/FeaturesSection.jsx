@@ -44,18 +44,9 @@ const FeaturesSection = () => {
 
   const getAnimationClass = (direction, index) => {
     if (!sectionVisible) {
-      switch (direction) {
-        case 'left':
-          return '-translate-x-full opacity-0';
-        case 'right':
-          return 'translate-x-full opacity-0';
-        case 'bottom':
-          return 'translate-y-full opacity-0';
-        default:
-          return 'opacity-0';
-      }
+      return 'opacity-0 scale-75 blur-md';
     }
-    return 'translate-x-0 translate-y-0 opacity-100';
+    return 'opacity-100 scale-100 blur-0';
   };
 
   return (
@@ -84,14 +75,12 @@ const FeaturesSection = () => {
             return (
               <div 
                 key={index} 
-                className={`bg-slate-900 rounded-2xl p-8 shadow-lg border border-slate-700 hover:border-blue-400 hover:shadow-xl hover:shadow-blue-500/40 transition-all duration-700 ease-smooth group h-full hover:scale-105 ${
-                  getAnimationClass(feature.direction, index)
-                }`}
+                className={`bg-slate-900 rounded-2xl p-8 shadow-lg border border-slate-700 hover:border-blue-400 hover:shadow-xl hover:shadow-blue-500/40 transition-all duration-700 ease-smooth group h-full hover:scale-105 ${getAnimationClass(feature.direction, index)}`}
                 style={{
                   transitionDelay: `${index * 200}ms`
                 }}
               >
-                                  <div className={`inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r ${feature.color} rounded-xl mb-6 group-hover:scale-110 transition-transform duration-300 ease-bounce shadow-lg`}>
+                <div className={`inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r ${feature.color} rounded-xl mb-6 group-hover:scale-110 transition-transform duration-300 ease-bounce shadow-lg`}>
                   <IconComponent className="w-8 h-8 text-white" />
                 </div>
                 

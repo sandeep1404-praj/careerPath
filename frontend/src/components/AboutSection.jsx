@@ -1,9 +1,10 @@
 import { Target, Users, TrendingUp, Award } from "lucide-react";
-import { useScrollAnimation } from "../hooks/useScrollAnimation";
+// import { useScrollAnimation } from "../hooks/useScrollAnimation";
 
 const AboutSection = () => {
-  const [leftRef, leftVisible] = useScrollAnimation(0.2);
-  const [rightRef, rightVisible] = useScrollAnimation(0.2);
+  // const [leftRef, leftVisible] = useScrollAnimation(0.1);
+  // const [rightRef, rightVisible] = useScrollAnimation(0.2);
+  
 
   const stats = [
     { icon: Target, value: "1000+", label: "Students Guided" },
@@ -18,11 +19,15 @@ const AboutSection = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           {/* Left Content */}
           <div 
-            ref={leftRef}
+            // ref={leftRef}
+            // className={`
+            //   transition-all duration-3000 ease-smooth
+            //   opacity-100 translate-x-0
+            //   lg:${leftVisible ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0'}
+            // `}
             className={`
-              transition-all duration-1000 ease-smooth
+              transition-all duration-3000 ease-smooth
               opacity-100 translate-x-0
-              lg:${leftVisible ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0'}
             `}
           >
             <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-8">
@@ -49,12 +54,13 @@ const AboutSection = () => {
 
           {/* Right Stats Grid */}
           <div 
-            ref={rightRef}
-            className={`transition-all duration-1000 ease-smooth delay-500 ${
-              rightVisible 
-                ? 'translate-x-0 opacity-100' 
-                : 'translate-x-full opacity-0'
-            }`}
+            // ref={rightRef}
+            // className={`transition-all duration-1000 ease-smooth delay-500 ${
+            //   rightVisible 
+            //     ? 'translate-x-0 opacity-100' 
+            //     : 'translate-x-full opacity-0'
+            // }`}
+            className={`transition-all duration-1000 ease-smooth delay-500 `}
           >
             <div className="grid grid-cols-2 gap-8">
               {stats.map((stat, index) => {
