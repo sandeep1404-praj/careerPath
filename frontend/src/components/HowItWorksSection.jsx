@@ -59,7 +59,7 @@ const HowItWorksSection = () => {
               return (
                 <div 
                   key={index} 
-                  className={`relative text-center group transition-all duration-1200 ease-smooth ${
+                  className={`relative text-center group transition-all duration-300 ease-smooth ${
                     sectionVisible 
                       ? 'translate-x-0 opacity-100' 
                       : '-translate-x-full opacity-0'
@@ -69,7 +69,7 @@ const HowItWorksSection = () => {
                   }}
                 >
                   {/* Card */}
-                  <div className="bg-slate-900 border border-slate-700 rounded-2xl p-12 pt-16 h-full transition-all duration-500 ease-smooth hover:border-blue-400 hover:shadow-xl hover:shadow-blue-500/40 hover:scale-105 relative">
+                  <div className="bg-slate-900 border border-slate-700 rounded-2xl p-12 pt-16 h-full transition-all duration-200 ease-smooth hover:border-blue-400 hover:shadow-xl hover:shadow-blue-500/40 hover:scale-105 relative">
                     {/* Step Number Circle - Positioned on top of card */}
                     <div className="absolute -top-8 left-1/2 transform -translate-x-1/2">
                       <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 text-white rounded-full text-lg font-bold z-10">
@@ -78,15 +78,15 @@ const HowItWorksSection = () => {
                     </div>
                     
                     {/* Icon Container */}
-                    <div className="inline-flex items-center justify-center w-20 h-20 bg-slate-700 rounded-lg mb-10 transition-all duration-500 ease-bounce hover:scale-110">
-                      <IconComponent className="w-10 h-10 text-blue-400 transition-colors duration-300" />
+                    <div className="inline-flex items-center justify-center w-20 h-20 bg-slate-700 rounded-lg mb-10 transition-all duration-200 ease-bounce hover:scale-110">
+                      <IconComponent className="w-10 h-10 text-blue-400 transition-colors duration-150" />
                     </div>
                     
                     {/* Content */}
                     <h3 className="text-2xl font-bold text-white mb-8 text-center">
                       {step.title}
                     </h3>
-                    <p className="text-gray-400 text-base leading-relaxed text-center transition-colors duration-300">
+                    <p className="text-gray-400 text-base leading-relaxed text-center transition-colors duration-150">
                       {step.description}
                     </p>
                   </div>

@@ -67,7 +67,7 @@ const BlogSection = () => {
           {blogs.map((blog, index) => (
             <article 
               key={index} 
-              className={`bg-gray-900/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-700/50 overflow-hidden hover:border-blue-400/50 hover:shadow-2xl hover:shadow-blue-500/20 transition-all duration-1200 ease-elastic group hover:-translate-y-3 hover:scale-105 ${
+              className={`bg-gray-900/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-700/50 overflow-hidden hover:border-blue-400/50 hover:shadow-2xl hover:shadow-blue-500/20 transition-all duration-300 ease-elastic group hover:-translate-y-3 hover:scale-105 ${
                 sectionVisible 
                   ? 'scale-100 opacity-100' 
                   : 'scale-90 opacity-0'
@@ -81,10 +81,10 @@ const BlogSection = () => {
                 <img 
                   src={blog.image} 
                   alt={blog.title}
-                  className="w-full h-full object-cover transition-transform duration-700 ease-smooth group-hover:scale-110"
+                  className="w-full h-full object-cover transition-transform duration-300 ease-smooth group-hover:scale-110"
                 />
                 {/* Gradient Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
                 
                 {/* Category Badge */}
                 <div className="absolute top-4 left-4">
@@ -94,7 +94,7 @@ const BlogSection = () => {
                 </div>
 
                 {/* Stats Overlay */}
-                <div className="absolute bottom-4 right-4 flex items-center gap-4 text-white/80 text-sm opacity-0 group-hover:opacity-100 transition-all duration-500 transform translate-y-2 group-hover:translate-y-0">
+                <div className="absolute bottom-4 right-4 flex items-center gap-4 text-white/80 text-sm opacity-0 group-hover:opacity-100 transition-all duration-200 transform translate-y-2 group-hover:translate-y-0">
                   <div className="flex items-center gap-1 bg-black/30 px-2 py-1 rounded-full backdrop-blur-sm">
                     <Eye className="w-3 h-3" />
                     {blog.views}
@@ -119,16 +119,16 @@ const BlogSection = () => {
                   </div>
                 </div>
 
-                <h3 className="text-xl font-bold text-foreground mb-3 line-clamp-2 group-hover:text-blue-300 transition-colors duration-300">
+                <h3 className="text-xl font-bold text-foreground mb-3 line-clamp-2 group-hover:text-blue-300 transition-colors duration-150">
                   {blog.title}
                 </h3>
-                <p className="text-muted-foreground mb-6 line-clamp-3 group-hover:text-gray-300 transition-colors duration-300">
+                <p className="text-muted-foreground mb-6 line-clamp-3 group-hover:text-gray-300 transition-colors duration-150">
                   {blog.description}
                 </p>
 
-                <button className="btn btn-ghost text-primary hover:text-primary-dark font-medium transition-all duration-500 ease-smooth hover:scale-105 group/btn">
+                <button className="btn btn-ghost text-primary hover:text-primary-dark font-medium transition-all duration-200 ease-smooth hover:scale-105 group/btn">
                   Read More
-                  <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover/btn:translate-x-1" />
+                  <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-150 group-hover/btn:translate-x-1" />
                 </button>
               </div>
             </article>
@@ -137,7 +137,7 @@ const BlogSection = () => {
 
         {/* View All Blogs CTA */}
         <div 
-          className={`text-center transition-all duration-1200 ease-smooth ${
+          className={`text-center transition-all duration-300 ease-smooth ${
             sectionVisible 
               ? 'translate-y-0 opacity-100' 
               : 'translate-y-10 opacity-0'
@@ -146,9 +146,9 @@ const BlogSection = () => {
             transitionDelay: '900ms'
           }}
         >
-          <button className="btn btn-outline w-full max-w-md border-2 border-slate-600 hover:border-blue-400 text-gray-300 hover:text-white py-4 rounded-xl font-semibold transition-all duration-500 ease-smooth group-hover:bg-blue-500/10 hover:scale-105 shadow-lg hover:shadow-blue-500/20">
+          <button className="btn btn-outline w-full max-w-md border-2 border-slate-600 hover:border-blue-400 text-gray-300 hover:text-white py-4 rounded-xl font-semibold transition-all duration-200 ease-smooth group-hover:bg-blue-500/10 hover:scale-105 shadow-lg hover:shadow-blue-500/20">
             View All Articles
-            <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform duration-300" />
+            <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform duration-150" />
           </button>
         </div>
       </div>

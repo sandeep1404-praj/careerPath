@@ -19,7 +19,7 @@ const CTASection = () => {
       >
         {/* Icon */}
         <div 
-          className={`inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl mb-8 shadow-lg shadow-blue-500/25 transition-all duration-1200 ease-bounce ${
+          className={`inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl mb-8 shadow-lg shadow-blue-500/25 transition-all duration-300 ease-bounce ${
             sectionVisible 
               ? 'scale-100 opacity-100' 
               : 'scale-90 opacity-0'
@@ -33,7 +33,7 @@ const CTASection = () => {
         
         {/* Headline */}
         <h2 
-          className={`text-5xl md:text-6xl font-bold text-white mb-6 leading-tight transition-all duration-1200 ease-smooth ${
+          className={`text-5xl md:text-6xl font-bold text-white mb-6 leading-tight transition-all duration-300 ease-smooth ${
             sectionVisible 
               ? 'translate-y-0 opacity-100' 
               : 'translate-y-10 opacity-0'
@@ -50,7 +50,7 @@ const CTASection = () => {
         
         {/* Subheadline */}
         <p 
-          className={`text-xl text-gray-300 mb-12 max-w-3xl mx-auto leading-relaxed transition-all duration-1200 ease-smooth ${
+          className={`text-xl text-gray-300 mb-12 max-w-3xl mx-auto leading-relaxed transition-all duration-300 ease-smooth ${
             sectionVisible 
               ? 'translate-y-0 opacity-100' 
               : 'translate-y-10 opacity-0'
@@ -62,9 +62,10 @@ const CTASection = () => {
           Let us guide you through personalized assessments and create the perfect roadmap for your career journey.
         </p>
         
+        
         {/* CTA Buttons */}
         <div 
-          className={`flex flex-col sm:flex-row gap-6 justify-center items-center mb-20 transition-all duration-1200 ease-smooth ${
+          className={`flex flex-col sm:flex-row gap-6 justify-center items-center mb-20 transition-all duration-300 ease-smooth ${
             sectionVisible 
               ? 'translate-y-0 opacity-100' 
               : 'translate-y-10 opacity-0'
@@ -73,12 +74,12 @@ const CTASection = () => {
             transitionDelay: '1200ms'
           }}
         >
-                      <button className="btn btn-primary btn-lg bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white px-8 py-4 rounded-xl text-lg font-semibold shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30 transition-all duration-500 ease-bounce hover:-translate-y-1 hover:scale-105">
+                      <button className="btn btn-primary btn-lg bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white px-8 py-4 rounded-xl text-lg font-semibold shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30 transition-all duration-200 ease-bounce hover:-translate-y-1 hover:scale-105">
             Get Started for Free
             <ArrowRight className="ml-2 h-5 w-5" />
           </button>
           
-                      <button className="btn btn-outline btn-lg border-2 border-gray-600 hover:border-blue-400 text-gray-300 hover:text-white px-8 py-4 rounded-xl text-lg font-semibold transition-all duration-500 ease-smooth hover:-translate-y-1 hover:scale-105">
+                      <button className="btn btn-outline btn-lg border-2 border-gray-600 hover:border-blue-400 text-gray-300 hover:text-white px-8 py-4 rounded-xl text-lg font-semibold transition-all duration-200 ease-smooth hover:-translate-y-1 hover:scale-105">
             Talk to Our Experts
           </button>
         </div>
@@ -112,7 +113,7 @@ const CTASection = () => {
             return (
               <div 
                 key={index}
-                className={`bg-slate-900/50 border border-slate-700 rounded-2xl p-8 hover:border-blue-400/50 transition-all duration-1200 ease-elastic hover:-translate-y-2 hover:scale-105 ${
+                className={`bg-slate-900/50 border border-slate-700 rounded-2xl p-8 hover:border-blue-400/50 transition-all duration-300 ease-elastic hover:-translate-y-2 hover:scale-105 ${
                   sectionVisible 
                     ? 'scale-100 opacity-100' 
                     : 'scale-90 opacity-0'

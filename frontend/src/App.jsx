@@ -13,6 +13,8 @@ import ResetPassword from "./pages/ResetPassword";
 
 // optional layout wrapper
 import {AppLayout} from "./components/Layout/AppLayout";  
+// import RoadmapPage from "./components/RoadmapPage";
+import Roadmap from "./components/RoadmapPage";
 
 const queryClient = new QueryClient();
 
@@ -27,6 +29,7 @@ const App = () => {
         { path: "/login", element: <Login /> },
         { path: "/signup", element: <Signup /> },
         { path: "/verify-email", element: <VerifyEmail /> },
+        {path:"/roadmap/:id", element:<Roadmap />},
         {
           path: "/dashboard",
           element: (

@@ -5,6 +5,7 @@ import cors from 'cors';
 
 import connectDB from './config/db.js';
 import authRoutes from './routes/auth.js';
+import roadmapRoutes from "./routes/roadmap.js";
 
 dotenv.config();
 const app = express();
@@ -25,6 +26,7 @@ connectDB();
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use("/api/roadmaps", roadmapRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

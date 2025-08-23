@@ -75,17 +75,17 @@ const FeaturesSection = () => {
             return (
               <div 
                 key={index} 
-                className={`bg-slate-900 rounded-2xl p-8 shadow-lg border border-slate-700 hover:border-blue-400 hover:shadow-xl hover:shadow-blue-500/40 transition-all duration-700 ease-smooth group h-full hover:scale-105 ${getAnimationClass(feature.direction, index)}`}
+                className={`bg-slate-900 rounded-2xl p-8 shadow-lg border border-slate-700 hover:border-blue-400 hover:shadow-xl hover:shadow-blue-500/40 transition-all duration-200 ease-smooth group h-full hover:scale-105 ${getAnimationClass(feature.direction, index)}`}
                 style={{
                   transitionDelay: `${index * 200}ms`
                 }}
               >
-                <div className={`inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r ${feature.color} rounded-xl mb-6 group-hover:scale-110 transition-transform duration-300 ease-bounce shadow-lg`}>
+                <div className={`inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r ${feature.color} rounded-xl mb-6 group-hover:scale-110 transition-transform duration-150 ease-bounce shadow-lg`}>
                   <IconComponent className="w-8 h-8 text-white" />
                 </div>
                 
-                <h3 className="text-xl font-bold text-white mb-4 group-hover:text-blue-300 transition-colors duration-300">{feature.title}</h3>
-                <p className="text-gray-400 leading-relaxed group-hover:text-gray-300 transition-colors duration-300">{feature.description}</p>
+                <h3 className="text-xl font-bold text-white mb-4 group-hover:text-blue-300 transition-colors duration-150">{feature.title}</h3>
+                <p className="text-gray-400 leading-relaxed group-hover:text-gray-300 transition-colors duration-150">{feature.description}</p>
               </div>
             );
           })}
