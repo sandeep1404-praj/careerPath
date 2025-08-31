@@ -9,12 +9,16 @@ import VerifyEmail from "./pages/VerifyEmail";
 import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 import ForgotPassword from "./pages/ForgotPassword";
+import BlogSection from "@/components/BlogSection";
+import AboutSection from "@/components/AboutSection";
+
 import ResetPassword from "./pages/ResetPassword";
 
 // optional layout wrapper
 import {AppLayout} from "./components/Layout/AppLayout";  
 // import RoadmapPage from "./components/RoadmapPage";
 import Roadmap from "./components/RoadmapPage";
+import ProfileRoadmapPage from "./pages/ProfilePage";
 
 const queryClient = new QueryClient();
 
@@ -26,10 +30,20 @@ const App = () => {
       errorElement: <NotFound />,
       children: [
         { path: "/", element: <Index /> },
+        { path: "/about", element: <AboutSection /> },
+        { path: "/blogs", element: <BlogSection /> },
         { path: "/login", element: <Login /> },
         { path: "/signup", element: <Signup /> },
         { path: "/verify-email", element: <VerifyEmail /> },
         {path:"/roadmap/:id", element:<Roadmap />},
+        {
+          path:"/profile",
+          element:(
+          <ProtectedRoute>
+            <ProfileRoadmapPage />
+          </ProtectedRoute>
+          )
+        },
         {
           path: "/dashboard",
           element: (

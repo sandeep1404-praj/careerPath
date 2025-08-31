@@ -132,14 +132,14 @@ export function Navbar() {
                 Home
               </Link>
               <a 
-                href="/#about" 
-                className={getLinkClasses('#about')}
+                href="/about" 
+                className={getLinkClasses('/about')}
               >
                 About
               </a>
               <a 
-                href="/#blogs" 
-                className={getLinkClasses('#blogs')}
+                href="/blogs" 
+                className={getLinkClasses('/blogs')}
               >
                 Blogs
               </a>
@@ -149,6 +149,14 @@ export function Navbar() {
                   className={getLinkClasses('/dashboard')}
                 >
                   Dashboard
+                </Link>
+              )}
+              {isAuthenticated && (
+                <Link 
+                  to="/profile" 
+                  className={getLinkClasses('/profile')}
+                >
+                  Profile
                 </Link>
               )}
             </div>
@@ -214,16 +222,16 @@ export function Navbar() {
             Home
           </Link>
           <a 
-            href="/#about" 
-            className={`block py-2 text-base md:text-lg font-medium ${getLinkClasses('#about', '').split(' ').filter(cls => !cls.includes('relative')).join(' ')}`}
+            href="/about" 
+            className={getLinkClasses('/about', 'block py-2 text-base md:text-lg font-medium')}
             onClick={toggleMobileMenu}
             ref={(el) => (menuItemsRef.current[1] = el)}
           >
             About
           </a>
           <a 
-            href="/#blogs" 
-            className={`block py-2 text-base md:text-lg font-medium ${getLinkClasses('#blogs', '').split(' ').filter(cls => !cls.includes('relative')).join(' ')}`}
+            href="/blogs" 
+            className={getLinkClasses('/blogs', 'block py-2 text-base md:text-lg font-medium')}
             onClick={toggleMobileMenu}
             ref={(el) => (menuItemsRef.current[2] = el)}
           >
