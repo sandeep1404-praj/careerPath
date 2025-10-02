@@ -117,3 +117,79 @@ export const authAPI = {
     });
   },
 };
+
+// Roadmap API functions
+export const roadmapAPI = {
+  // Get all static roadmaps
+  getStaticRoadmaps: async () => {
+    return apiRequest('/roadmaps/static', {
+      method: 'GET',
+    });
+  },
+
+  // Get specific static roadmap
+  getStaticRoadmap: async (id) => {
+    return apiRequest(`/roadmaps/static/${id}`, {
+      method: 'GET',
+    });
+  },
+
+  // Get user's personal roadmap
+  getUserRoadmap: async (token) => {
+    return apiRequest('/roadmaps/user', {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  },
+
+  // Add task to user's roadmap
+  addTaskToUserRoadmap: async (token, taskData) => {
+    // Debug log to verify payload type
+    console.log('Sending to backend /roadmaps/user/add:', taskData, typeof taskData);
+    return apiRequest('/roadmaps/user/add', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(taskData),
+    });
+  },
+
+  // Update user's roadmap
+  updateUserRoadmap: async (token, updateData) => {
+    return apiRequest('/roadmaps/user/update', {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(updateData),
+    });
+  },
+
+  // Update user preferences
+  updateUserPreferences: async (token, preferences) => {
+    return apiRequest('/roadmaps/user/preferences', {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ preferences }),
+    });
+  },
+
+  // Legacy roadmap functions (for backward compatibility)
+  getAllRoadmaps: async () => {
+    return apiRequest('/roadmaps', {
+      method: 'GET',
+    });
+  },
+
+  getRoadmap: async (id) => {
+    return apiRequest(`/roadmaps/${id}`, {
+      method: 'GET',
+    });
+  },
+};

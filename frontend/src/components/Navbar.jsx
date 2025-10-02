@@ -143,6 +143,12 @@ export function Navbar() {
               >
                 Blogs
               </a>
+              <Link 
+                to="/roadmaps" 
+                className={getLinkClasses('/roadmaps')}
+              >
+                Roadmaps
+              </Link>
               {isAuthenticated && (
                 <Link 
                   to="/dashboard" 
@@ -237,6 +243,14 @@ export function Navbar() {
           >
             Blogs
           </a>
+          <Link 
+            to="/roadmaps" 
+            className={getLinkClasses('/roadmaps', 'block py-2 text-base md:text-lg font-medium')}
+            onClick={toggleMobileMenu}
+            ref={(el) => (menuItemsRef.current[3] = el)}
+          >
+            Roadmaps
+          </Link>
           {isAuthenticated && (
             <Link 
               to="/dashboard" 
