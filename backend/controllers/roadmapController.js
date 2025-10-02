@@ -20,7 +20,7 @@ export const getStaticRoadmaps = async (req, res) => {
     console.log(`✅ Found ${roadmaps.length} static roadmaps`);
     
     if (roadmaps.length === 0) {
-      console.log('⚠️ No roadmaps found in database. Seeding might have failed.');
+      console.log('⚠️ No roadmaps found in database.');
     }
     
     res.json(roadmaps);
@@ -370,6 +370,226 @@ export const updateUserPreferences = async (req, res) => {
     console.error('Error updating user preferences:', error);
     res.status(500).json({ 
       message: 'Failed to update preferences', 
+      error: error.message 
+    });
+  }
+};
+
+// Add entire roadmap to user's roadmap
+export const addRoadmapToUser = async (req, res) => {
+  try {
+    console.log('🚀 Adding entire roadmap to user...');
+    console.log('User object:', req.user);
+    console.log('Request body:', JSON.stringify(req.body, null, 2));
+    console.log('Request body keys:', Object.keys(req.body || {}));
+    console.log('Content-Type:', req.headers['content-type']);
+    
+    const userId = req.user.id || req.user._id;
+    
+    if (!userId) {
+      console.error('❌ No user ID found in request');
+      return res.status(401).json({ message: 'User authentication failed' });
+    }
+    
+    const { roadmapId, roadmapName, roadmapTrack, tasks = [] } = req.body;
+
+    console.log('🔍 Extracted fields:', {
+      roadmapId: roadmapId,
+      roadmapName: roadmapName,
+      roadmapTrack: roadmapTrack,
+      tasksCount: tasks.length,
+      tasksType: typeof tasks,
+      isTasksArray: Array.isArray(tasks)
+    });
+
+    if (!roadmapId || !roadmapName || !tasks.length) {
+      console.error('❌ Missing required fields:', { 
+        roadmapId: roadmapId, 
+        roadmapName: roadmapName, 
+        tasksCount: tasks.length,
+        hasRoadmapId: !!roadmapId,
+        hasRoadmapName: !!roadmapName,
+        hasTasks: tasks.length > 0
+      });
+      return res.status(400).json({ 
+        message: 'Roadmap ID, name, and tasks are required',
+        received: {
+          roadmapId: !!roadmapId,
+          roadmapName: !!roadmapName,
+          tasksCount: tasks.length
+        }
+      });
+    }
+
+    console.log('📋 Looking for existing user roadmap for userId:', userId);
+    let userRoadmap = await UserRoadmap.findOne({ userId });
+    
+    if (!userRoadmap) {
+      console.log('📝 Creating new user roadmap...');
+      userRoadmap = new UserRoadmap({ 
+        userId, 
+        tasks: [],
+        roadmaps: [],
+        stats: { totalTasks: 0, completedTasks: 0, inProgressTasks: 0 }
+      });
+    }
+
+    // Check if roadmap already exists in user's roadmap
+    const existingRoadmap = userRoadmap.roadmaps?.find(rm => rm.roadmapId === roadmapId);
+    if (existingRoadmap) {
+      console.log('⚠️ Roadmap already exists:', roadmapId);
+      return res.status(400).json({ message: 'Roadmap already added to your collection' });
+    }
+
+    // Calculate next order position for tasks
+    const maxOrder = userRoadmap.tasks.length > 0 
+      ? Math.max(...userRoadmap.tasks.map(task => task.order || 0))
+      : 0;
+
+    // Prepare tasks to add
+    const tasksToAdd = tasks.map((task, index) => {
+      const taskId = `${roadmapId}_${task.id || task.taskId || index}`;
+      
+      // Check if task already exists
+      const existingTask = userRoadmap.tasks.find(t => t.taskId === taskId);
+      if (existingTask) {
+        console.log(`⚠️ Skipping existing task: ${taskId}`);
+        return null;
+      }
+
+      return {
+        taskId,
+        name: task.name,
+        description: task.description || '',
+        staticTaskId: task.id || task.taskId,
+        roadmapTrack: roadmapTrack || task.roadmapTrack,
+        roadmapId: roadmapId,
+        estimatedTime: task.estimatedTime || '',
+        difficulty: task.difficulty || 'Beginner',
+        category: task.category || 'General',
+        resources: task.resources || [],
+        isCustom: false,
+        status: 'not-started',
+        order: maxOrder + index + 1,
+        dateAdded: new Date()
+      };
+    }).filter(Boolean); // Remove null values (existing tasks)
+
+    if (tasksToAdd.length === 0) {
+      return res.status(400).json({ message: 'All tasks from this roadmap are already in your collection' });
+    }
+
+    // Add roadmap info
+    const roadmapInfo = {
+      roadmapId,
+      name: roadmapName,
+      track: roadmapTrack,
+      taskCount: tasksToAdd.length,
+      dateAdded: new Date()
+    };
+
+    // Add roadmap and tasks to user roadmap
+    if (!userRoadmap.roadmaps) {
+      userRoadmap.roadmaps = [];
+    }
+    userRoadmap.roadmaps.push(roadmapInfo);
+    userRoadmap.tasks.push(...tasksToAdd);
+
+    // Update stats
+    userRoadmap.stats = {
+      totalTasks: userRoadmap.tasks.length,
+      completedTasks: userRoadmap.tasks.filter(t => t.status === 'completed').length,
+      inProgressTasks: userRoadmap.tasks.filter(t => t.status === 'in-progress').length
+    };
+
+    await userRoadmap.save();
+
+    console.log(`✅ Successfully added roadmap "${roadmapName}" with ${tasksToAdd.length} tasks`);
+    
+    res.json({ 
+      message: `Roadmap "${roadmapName}" added successfully`,
+      roadmap: roadmapInfo,
+      tasksAdded: tasksToAdd.length,
+      totalTasks: userRoadmap.tasks.length
+    });
+  } catch (error) {
+    console.error('Error adding roadmap to user:', error);
+    res.status(500).json({ 
+      message: 'Failed to add roadmap', 
+      error: error.message 
+    });
+  }
+};
+
+// Delete entire roadmap from user's collection
+export const deleteRoadmapFromUser = async (req, res) => {
+  try {
+    console.log('🗑️ Deleting roadmap from user...');
+    console.log('User object:', req.user);
+    console.log('Request params:', req.params);
+    
+    const userId = req.user.id || req.user._id;
+    const { roadmapId } = req.params;
+    
+    if (!userId) {
+      console.error('❌ No user ID found in request');
+      return res.status(401).json({ message: 'User authentication failed' });
+    }
+
+    if (!roadmapId) {
+      console.error('❌ No roadmap ID provided');
+      return res.status(400).json({ message: 'Roadmap ID is required' });
+    }
+
+    console.log('📋 Looking for user roadmap...');
+    const userRoadmap = await UserRoadmap.findOne({ userId });
+    
+    if (!userRoadmap) {
+      console.log('❌ User roadmap not found');
+      return res.status(404).json({ message: 'User roadmap not found' });
+    }
+
+    // Find the roadmap to delete
+    const roadmapIndex = userRoadmap.roadmaps?.findIndex(rm => rm.roadmapId === roadmapId);
+    if (roadmapIndex === -1 || roadmapIndex === undefined) {
+      console.log('❌ Roadmap not found in user collection:', roadmapId);
+      return res.status(404).json({ message: 'Roadmap not found in your collection' });
+    }
+
+    const roadmapToDelete = userRoadmap.roadmaps[roadmapIndex];
+    console.log('🎯 Found roadmap to delete:', roadmapToDelete.name);
+
+    // Remove all tasks associated with this roadmap
+    const tasksBeforeDelete = userRoadmap.tasks.length;
+    userRoadmap.tasks = userRoadmap.tasks.filter(task => task.roadmapId !== roadmapId);
+    const tasksAfterDelete = userRoadmap.tasks.length;
+    const deletedTasksCount = tasksBeforeDelete - tasksAfterDelete;
+
+    // Remove the roadmap from the roadmaps array
+    userRoadmap.roadmaps.splice(roadmapIndex, 1);
+
+    // Update stats
+    userRoadmap.stats = {
+      totalTasks: userRoadmap.tasks.length,
+      completedTasks: userRoadmap.tasks.filter(t => t.status === 'completed').length,
+      inProgressTasks: userRoadmap.tasks.filter(t => t.status === 'in-progress').length
+    };
+
+    await userRoadmap.save();
+
+    console.log(`✅ Successfully deleted roadmap "${roadmapToDelete.name}" with ${deletedTasksCount} tasks`);
+    
+    res.json({ 
+      message: `Roadmap "${roadmapToDelete.name}" deleted successfully`,
+      deletedRoadmap: roadmapToDelete.name,
+      deletedTasksCount,
+      remainingTasks: userRoadmap.tasks.length,
+      remainingRoadmaps: userRoadmap.roadmaps.length
+    });
+  } catch (error) {
+    console.error('❌ Error deleting roadmap from user:', error);
+    res.status(500).json({ 
+      message: 'Failed to delete roadmap', 
       error: error.message 
     });
   }

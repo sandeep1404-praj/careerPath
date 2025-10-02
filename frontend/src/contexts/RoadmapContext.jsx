@@ -202,6 +202,102 @@ export const RoadmapProvider = ({ children }) => {
     }
   };
 
+  // Add entire roadmap to user's collection
+  const addRoadmapToUser = async (roadmap) => {
+    if (!token) {
+      toast.error('Please log in to add roadmaps');
+      return false;
+    }
+
+    console.log('🔍 Received roadmap object:', roadmap);
+    console.log('🔍 Roadmap keys:', Object.keys(roadmap || {}));
+    
+    // Handle both _id and id fields from MongoDB
+    const roadmapId = roadmap?.id || roadmap?._id;
+    const roadmapName = roadmap?.name;
+    const roadmapTrack = roadmap?.track;
+    const roadmapTasks = roadmap?.tasks;
+    
+    console.log('🔍 Extracted data:', {
+      roadmapId,
+      roadmapName, 
+      roadmapTrack,
+      tasksCount: roadmapTasks?.length
+    });
+
+    if (!roadmapId || !roadmapName || !roadmapTasks || !Array.isArray(roadmapTasks) || roadmapTasks.length === 0) {
+      console.error('❌ Invalid roadmap data:', {
+        hasRoadmap: !!roadmap,
+        hasId: !!roadmapId,
+        hasName: !!roadmapName,
+        hasTasks: !!roadmapTasks,
+        isTasksArray: Array.isArray(roadmapTasks),
+        tasksLength: roadmapTasks?.length
+      });
+      toast.error('Invalid roadmap data - missing required fields');
+      return false;
+    }
+
+    try {
+      const roadmapData = {
+        roadmapId: String(roadmapId), // Ensure it's a string
+        roadmapName: String(roadmapName),
+        roadmapTrack: String(roadmapTrack || ''),
+        tasks: roadmapTasks
+      };
+
+      console.log('🚀 Sending roadmap data to backend:', roadmapData);
+
+      const response = await roadmapAPI.addRoadmapToUser(token, roadmapData);
+      
+      console.log('✅ Backend response:', response);
+      
+      // Reload user roadmap to get updated data
+      await loadUserRoadmap();
+      
+      toast.success(`Roadmap "${roadmapName}" added successfully! ${response.tasksAdded || 0} tasks added.`);
+      return true;
+    } catch (error) {
+      console.error('❌ Full error details:', error);
+      console.error('❌ Error message:', error.message);
+      console.error('❌ Error response:', error.response?.data);
+      
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to add roadmap';
+      toast.error(errorMessage);
+      
+      return false;
+    }
+  };
+
+  // Delete roadmap from user's collection
+  const deleteRoadmapFromUser = async (roadmapId, roadmapName) => {
+    if (!token) {
+      toast.error('Please log in to delete roadmaps');
+      return false;
+    }
+
+    try {
+      console.log('🗑️ Deleting roadmap:', roadmapId);
+      
+      const response = await roadmapAPI.deleteRoadmapFromUser(token, roadmapId);
+      
+      console.log('✅ Backend response:', response);
+      
+      // Reload user roadmap to get updated data
+      await loadUserRoadmap();
+      
+      toast.success(`Roadmap "${roadmapName}" deleted successfully! ${response.deletedTasksCount || 0} tasks removed.`);
+      return true;
+    } catch (error) {
+      console.error('❌ Error deleting roadmap:', error);
+      
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to delete roadmap';
+      toast.error(errorMessage);
+      
+      return false;
+    }
+  };
+
   // Update task in user roadmap
   const updateTask = async (taskId, action, updates) => {
     if (!token) return false;
@@ -311,6 +407,8 @@ export const RoadmapProvider = ({ children }) => {
     loadStaticRoadmaps,
     loadUserRoadmap,
     addTaskToUser,
+    addRoadmapToUser,
+    deleteRoadmapFromUser,
     updateTask,
     updatePreferences,
     reorderTasks,

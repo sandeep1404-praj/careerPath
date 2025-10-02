@@ -6,13 +6,15 @@ import {
   getStaticRoadmap,
   getUserRoadmap,
   addTaskToUserRoadmap,
+  addRoadmapToUser,
+  deleteRoadmapFromUser,
   updateUserRoadmap,
   updateUserPreferences
 } from "../controllers/roadmapController.js";
 
 const router = express.Router();
 
-// Debug endpoint to check database status and seed data
+// Debug endpoint to check database status
 router.get("/debug", async (req, res) => {
   try {
     const mongoose = await import('mongoose');
@@ -30,7 +32,7 @@ router.get("/debug", async (req, res) => {
     res.json({
       database: dbStatus,
       roadmapCount,
-      message: roadmapCount === 0 ? 'No roadmaps found - seeding needed' : 'Database looks good'
+      message: roadmapCount === 0 ? 'No roadmaps found in database' : 'Database looks good'
     });
   } catch (error) {
     res.status(500).json({
@@ -55,22 +57,6 @@ router.post("/test-json", (req, res) => {
   });
 });
 
-// Manual seed endpoint for debugging
-router.post("/seed", async (req, res) => {
-  try {
-    const { seedRoadmaps } = await import('../utils/seedRoadmaps.js');
-    await seedRoadmaps();
-    res.json({ message: 'Roadmaps seeded successfully' });
-  } catch (error) {
-    console.error('Seeding error:', error);
-    res.status(500).json({
-      message: 'Failed to seed roadmaps',
-      error: error.message,
-      stack: error.stack
-    });
-  }
-});
-
 // IMPORTANT: All specific routes MUST come before any parameterized routes!
 
 // Get all static roadmaps
@@ -84,6 +70,12 @@ router.get("/user", authenticateToken, getUserRoadmap);
 
 // Add task to user's roadmap (protected)
 router.post("/user/add", authenticateToken, addTaskToUserRoadmap);
+
+// Add entire roadmap to user's collection (protected)
+router.post("/user/add-roadmap", authenticateToken, addRoadmapToUser);
+
+// Delete entire roadmap from user's collection (protected)
+router.delete("/user/delete-roadmap/:roadmapId", authenticateToken, deleteRoadmapFromUser);
 
 // Test endpoint to debug request body
 router.post("/user/debug-body", authenticateToken, (req, res) => {

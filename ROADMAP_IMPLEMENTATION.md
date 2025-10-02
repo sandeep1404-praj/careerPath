@@ -13,10 +13,7 @@ A comprehensive personalized roadmap feature has been implemented for your Caree
   - `PATCH /api/roadmaps/user/update` - Update user roadmap (protected)
   - `PATCH /api/roadmaps/user/preferences` - Update user preferences (protected)
 - **Controllers**: Full CRUD operations with proper error handling
-- **Seed Data**: Pre-populated with 3 comprehensive career tracks:
-  - Frontend Developer (10 tasks, 8-12 months)
-  - Backend Developer (10 tasks, 10-14 months)
-  - Full-Stack Developer (10 tasks, 12-16 months)
+- **Database Models**: StaticRoadmap and UserRoadmap with comprehensive schemas for storing roadmap data
 
 ### ✅ Frontend Implementation
 - **React Context**: `RoadmapContext` for state management
@@ -68,7 +65,6 @@ cd backend
 npm install
 npm start
 ```
-The server will automatically seed the database with sample roadmaps.
 
 ### 2. Start the Frontend
 ```bash
@@ -218,7 +214,6 @@ fetch('/api/roadmaps/user/update', {
 - `models/UserRoadmap.js` (new)
 - `controllers/roadmapController.js` (new)
 - `routes/roadmap.js` (updated)
-- `utils/seedRoadmaps.js` (new)
 - `server.js` (updated)
 
 ### Frontend Files

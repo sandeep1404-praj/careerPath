@@ -180,6 +180,30 @@ export const roadmapAPI = {
     });
   },
 
+  // Add entire roadmap to user's collection
+  addRoadmapToUser: async (token, roadmapData) => {
+    console.log('Sending to backend /roadmaps/user/add-roadmap:', roadmapData, typeof roadmapData);
+    return apiRequest('/roadmaps/user/add-roadmap', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(roadmapData),
+    });
+  },
+
+  // Delete entire roadmap from user's collection
+  deleteRoadmapFromUser: async (token, roadmapId) => {
+    console.log('Deleting roadmap from backend:', roadmapId);
+    return apiRequest(`/roadmaps/user/delete-roadmap/${roadmapId}`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  },
+
   // Legacy roadmap functions (for backward compatibility)
   getAllRoadmaps: async () => {
     return apiRequest('/roadmaps', {

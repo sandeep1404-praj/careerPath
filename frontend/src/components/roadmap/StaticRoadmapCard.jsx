@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import TaskItem from './TaskItem.jsx';
+import { useRoadmap } from '../../contexts/RoadmapContext.jsx';
 
 const StaticRoadmapCard = ({ roadmap, className = '' }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [isAddingRoadmap, setIsAddingRoadmap] = useState(false);
+  const { addRoadmapToUser } = useRoadmap();
 
   if (!roadmap) return null;
 
@@ -29,6 +32,24 @@ const StaticRoadmapCard = ({ roadmap, className = '' }) => {
     if (trackLower.includes('ai') || trackLower.includes('ml')) return '🤖';
     if (trackLower.includes('security')) return '🔒';
     return '💻';
+  };
+
+  const handleAddRoadmap = async (e) => {
+    e.stopPropagation(); // Prevent expanding/collapsing the card
+    
+    if (!addRoadmapToUser) {
+      console.error('addRoadmapToUser function not available');
+      return;
+    }
+
+    setIsAddingRoadmap(true);
+    try {
+      await addRoadmapToUser(roadmap);
+    } catch (error) {
+      console.error('Failed to add roadmap:', error);
+    } finally {
+      setIsAddingRoadmap(false);
+    }
   };
 
   return (
@@ -66,6 +87,29 @@ const StaticRoadmapCard = ({ roadmap, className = '' }) => {
                 <div>Time: {roadmap.totalEstimatedTime}</div>
               )}
             </div>
+            
+            {/* Add Roadmap button */}
+            <button
+              onClick={handleAddRoadmap}
+              disabled={isAddingRoadmap}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:opacity-50 text-white text-sm rounded-lg transition-colors flex items-center space-x-2"
+            >
+              {isAddingRoadmap ? (
+                <>
+                  <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  <span>Adding...</span>
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  <span>Add Roadmap</span>
+                </>
+              )}
+            </button>
             
             {/* Expand/collapse button */}
             <button className="text-gray-400 hover:text-white transition-colors">

@@ -6,7 +6,6 @@ import cors from 'cors';
 import connectDB from './config/db.js';
 import authRoutes from './routes/auth.js';
 import roadmapRoutes from "./routes/roadmap.js";
-import { seedRoadmaps } from './utils/seedRoadmaps.js';
 
 dotenv.config();
 const app = express();
@@ -49,17 +48,9 @@ app.use((req, res, next) => {
 });
 
 
-// Connect MongoDB and seed data
-connectDB().then(async () => {
-  console.log('🔗 Database connected, attempting to seed roadmaps...');
-  // Seed roadmaps on startup
-  try {
-    await seedRoadmaps();
-    console.log('✅ Roadmap seeding completed successfully');
-  } catch (error) {
-    console.log('⚠️ Roadmap seeding skipped or failed:', error.message);
-    console.error('Seeding error details:', error);
-  }
+// Connect MongoDB
+connectDB().then(() => {
+  console.log('🔗 Database connected successfully');
 }).catch((error) => {
   console.error('❌ Database connection failed:', error);
 });

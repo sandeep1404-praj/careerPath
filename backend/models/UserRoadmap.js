@@ -12,6 +12,7 @@ const userTaskSchema = new mongoose.Schema({
   isCustom: { type: Boolean, default: false }, // True if user created this task
   staticTaskId: { type: String }, // Original static task ID (if applicable)
   roadmapTrack: { type: String }, // Track this task belongs to
+  roadmapId: { type: String }, // ID of the roadmap this task belongs to
   estimatedTime: { type: String },
   difficulty: { 
     type: String, 
@@ -40,9 +41,18 @@ const userPreferencesSchema = new mongoose.Schema({
   }
 }, { _id: false });
 
+const userRoadmapInfoSchema = new mongoose.Schema({
+  roadmapId: { type: String, required: true }, // Reference to static roadmap ID
+  name: { type: String, required: true }, // Roadmap name
+  track: { type: String }, // Roadmap track
+  taskCount: { type: Number, default: 0 }, // Number of tasks from this roadmap
+  dateAdded: { type: Date, default: Date.now }
+}, { _id: false });
+
 const userRoadmapSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, unique: true },
   tasks: [userTaskSchema],
+  roadmaps: [userRoadmapInfoSchema], // Array of roadmaps added by user
   preferences: {
     type: userPreferencesSchema,
     default: () => ({
