@@ -3,22 +3,23 @@ import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { TextPlugin } from "gsap/TextPlugin";
 
+const TYPING_TEXTS = [
+  "career choices?",
+  "your future path?",
+  "what career to pick?",
+  "which skills to learn?",
+];
+
+const GRADIENT_CLASSES = [
+  "bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent",
+  "bg-gradient-to-r from-pink-400 to-orange-400 bg-clip-text text-transparent",
+  "bg-gradient-to-r from-cyan-400 to-teal-400 bg-clip-text text-transparent",
+  "bg-gradient-to-r from-yellow-400 to-red-400 bg-clip-text text-transparent",
+];
+
 gsap.registerPlugin(TextPlugin);
 
 export function HeroSection() {
-  const typingTexts = [
-    "career choices?",
-    "your future path?",
-    "what career to pick?",
-    "which skills to learn?",
-  ];
-
-  const gradientClasses = [
-    "bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent",
-    "bg-gradient-to-r from-pink-400 to-orange-400 bg-clip-text text-transparent",
-    "bg-gradient-to-r from-cyan-400 to-teal-400 bg-clip-text text-transparent",
-    "bg-gradient-to-r from-yellow-400 to-red-400 bg-clip-text text-transparent",
-  ];
 
   const textRef = useRef(null);
   const octopusRef = useRef(null);
@@ -37,11 +38,11 @@ export function HeroSection() {
   useEffect(() => {
     if (!textRef.current) return;
     const tl = gsap.timeline({ repeat: -1 });
-    typingTexts.forEach((text, index) => {
+    TYPING_TEXTS.forEach((text, index) => {
       tl.set(textRef.current, {
         scale: 0.95,
         opacity: 0.7,
-        className: gradientClasses[index],
+        className: GRADIENT_CLASSES[index],
       });
       tl.to(textRef.current, {
         duration: 1.5,
@@ -51,7 +52,7 @@ export function HeroSection() {
         ease: "power3.out",
       });
       tl.to({}, { duration: 1.2 });
-      if (index < typingTexts.length - 1) {
+  if (index < TYPING_TEXTS.length - 1) {
         tl.to(textRef.current, {
           duration: 0.8,
           text: "",

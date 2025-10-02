@@ -42,11 +42,20 @@ const FeaturesSection = () => {
     }
   ];
 
-  const getAnimationClass = (direction, index) => {
+  const getAnimationClass = (direction) => {
     if (!sectionVisible) {
-      return 'opacity-0 scale-75 blur-md';
+      switch (direction) {
+        case 'left':
+          return 'opacity-0 -translate-x-10 scale-95 blur-md';
+        case 'right':
+          return 'opacity-0 translate-x-10 scale-95 blur-md';
+        case 'bottom':
+          return 'opacity-0 translate-y-10 scale-95 blur-md';
+        default:
+          return 'opacity-0 scale-95 blur-md';
+      }
     }
-    return 'opacity-100 scale-100 blur-0';
+    return 'opacity-100 translate-x-0 translate-y-0 scale-100 blur-0';
   };
 
   return (
@@ -75,7 +84,7 @@ const FeaturesSection = () => {
             return (
               <div 
                 key={index} 
-                className={`bg-slate-900 rounded-2xl p-8 shadow-lg border border-slate-700 hover:border-blue-400 hover:shadow-xl hover:shadow-blue-500/40 transition-all duration-200 ease-smooth group h-full hover:scale-105 ${getAnimationClass(feature.direction, index)}`}
+                className={`bg-slate-900 rounded-2xl p-8 shadow-lg border border-slate-700 hover:border-blue-400 hover:shadow-xl hover:shadow-blue-500/40 transition-all duration-200 ease-smooth group h-full hover:scale-105 ${getAnimationClass(feature.direction)}`}
                 style={{
                   transitionDelay: `${index * 200}ms`
                 }}

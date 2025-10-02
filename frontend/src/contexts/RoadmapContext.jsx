@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
 import { roadmapAPI } from '../services/api.js';
 import { useAuth } from './AuthContext.jsx';
 import toast from '../utils/toast.js';
@@ -67,7 +67,7 @@ const roadmapReducer = (state, action) => {
         }
       };
 
-    case ROADMAP_ACTIONS.UPDATE_TASK:
+    case ROADMAP_ACTIONS.UPDATE_TASK: {
       if (!state.userRoadmap) return state;
       const updatedTasks = state.userRoadmap.tasks.map(task =>
         task.taskId === action.payload.taskId
@@ -86,8 +86,9 @@ const roadmapReducer = (state, action) => {
           }
         }
       };
+    }
 
-    case ROADMAP_ACTIONS.REMOVE_TASK:
+    case ROADMAP_ACTIONS.REMOVE_TASK: {
       if (!state.userRoadmap) return state;
       const filteredTasks = state.userRoadmap.tasks.filter(task => task.taskId !== action.payload);
       return {
@@ -102,6 +103,7 @@ const roadmapReducer = (state, action) => {
           }
         }
       };
+    }
 
     case ROADMAP_ACTIONS.SET_PREFERENCES:
       return {
@@ -133,15 +135,15 @@ export const RoadmapProvider = ({ children }) => {
   const { user, token } = useAuth();
 
   // Helper function to handle errors
-  const handleError = (error, defaultMessage) => {
+  const handleError = useCallback((error, defaultMessage) => {
     console.error(defaultMessage, error);
     const message = error.message || defaultMessage;
     dispatch({ type: ROADMAP_ACTIONS.SET_ERROR, payload: message });
     toast.error(message);
-  };
+  }, [dispatch]);
 
   // Load static roadmaps
-  const loadStaticRoadmaps = async () => {
+  const loadStaticRoadmaps = useCallback(async () => {
     try {
       dispatch({ type: ROADMAP_ACTIONS.SET_LOADING, payload: true });
       const data = await roadmapAPI.getStaticRoadmaps();
@@ -149,10 +151,10 @@ export const RoadmapProvider = ({ children }) => {
     } catch (error) {
       handleError(error, 'Failed to load roadmaps');
     }
-  };
+  }, [dispatch, handleError]);
 
   // Load user roadmap
-  const loadUserRoadmap = async () => {
+  const loadUserRoadmap = useCallback(async () => {
     if (!token) return;
     
     try {
@@ -162,12 +164,12 @@ export const RoadmapProvider = ({ children }) => {
     } catch (error) {
       handleError(error, 'Failed to load your roadmap');
     }
-  };
+  }, [dispatch, handleError, token]);
 
   // Load static roadmaps on mount (available to everyone)
   useEffect(() => {
     loadStaticRoadmaps();
-  }, []);
+  }, [loadStaticRoadmaps]);
 
   // Load user roadmap when user is authenticated
   useEffect(() => {
@@ -180,7 +182,7 @@ export const RoadmapProvider = ({ children }) => {
         payload: null 
       });
     }
-  }, [user, token]);
+  }, [user, token, loadUserRoadmap]);
 
   // Add task to user roadmap
   const addTaskToUser = async (taskData) => {

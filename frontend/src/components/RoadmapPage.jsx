@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { useRoadmap } from '../contexts/RoadmapContext.jsx';
 import StaticRoadmapCard from './roadmap/StaticRoadmapCard.jsx';
@@ -11,7 +11,6 @@ function RoadmapPage() {
     loading, 
     error, 
     staticRoadmaps, 
-    userRoadmap,
     loadStaticRoadmaps 
   } = useRoadmap();
 
@@ -21,10 +20,10 @@ function RoadmapPage() {
 
   // Load static roadmaps on component mount
   useEffect(() => {
-    if (staticRoadmaps.length === 0 && !loading) {
+    if (!loading && staticRoadmaps.length === 0) {
       loadStaticRoadmaps();
     }
-  }, []);
+  }, [loading, staticRoadmaps.length, loadStaticRoadmaps]);
 
   // Filter roadmaps based on selected track and search query
   const filteredRoadmaps = staticRoadmaps.filter(roadmap => {

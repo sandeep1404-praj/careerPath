@@ -6,21 +6,6 @@ const PageTransition = ({ children }) => {
   const location = useLocation();
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [showText, setShowText] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const checkMobile = () => {
-      if (typeof window !== "undefined") {
-        setIsMobile(window.innerWidth < 768);
-      }
-    };
-
-    checkMobile();
-    if (typeof window !== "undefined") {
-      window.addEventListener("resize", checkMobile);
-      return () => window.removeEventListener("resize", checkMobile);
-    }
-  }, []);
 
   useEffect(() => {
     setIsTransitioning(true);

@@ -9,7 +9,7 @@ const VerifyEmail = () => {
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const { verifyEmail, resendVerification } = useAuth();
+  const { verifyEmail } = useAuth();
   const token = searchParams.get('token');
 
   useEffect(() => {
@@ -30,6 +30,7 @@ const VerifyEmail = () => {
           setMessage(result.error);
         }
       } catch (error) {
+        console.error('Email verification failed', error);
         setStatus('error');
         setMessage('An error occurred during verification. Please try again.');
       }

@@ -30,17 +30,26 @@ const userTaskSchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now }
 });
 
+const userPreferencesSchema = new mongoose.Schema({
+  defaultTrack: { type: String, default: '' },
+  showCompleted: { type: Boolean, default: true },
+  sortBy: {
+    type: String,
+    enum: ['order', 'addedAt', 'difficulty', 'track'],
+    default: 'order'
+  }
+}, { _id: false });
+
 const userRoadmapSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, unique: true },
   tasks: [userTaskSchema],
   preferences: {
-    defaultTrack: { type: String }, // User's primary career track
-    showCompleted: { type: Boolean, default: true },
-    sortBy: { 
-      type: String, 
-      enum: ['order', 'addedAt', 'difficulty', 'track'], 
-      default: 'order' 
-    }
+    type: userPreferencesSchema,
+    default: () => ({
+      defaultTrack: '',
+      showCompleted: true,
+      sortBy: 'order'
+    })
   },
   stats: {
     totalTasks: { type: Number, default: 0 },

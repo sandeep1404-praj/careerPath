@@ -34,7 +34,8 @@ const Login = () => {
       } else {
         setError(result.error);
       }
-    } catch (error) {
+    } catch (err) {
+      console.error('Login failed', err);
       setError('Unable to connect to server. Please try again later.');
     }
     setLoading(false);

@@ -129,7 +129,6 @@ export const addTaskToUserRoadmap = async (req, res) => {
       userRoadmap = new UserRoadmap({ 
         userId, 
         tasks: [],
-        preferences: {},
         stats: { totalTasks: 0, completedTasks: 0, inProgressTasks: 0 }
       });
     } else {
@@ -292,19 +291,75 @@ export const updateUserRoadmap = async (req, res) => {
 export const updateUserPreferences = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { preferences } = req.body;
+    let payload = req.body;
 
-    if (!preferences) {
-      return res.status(400).json({ message: 'Preferences are required' });
+    if (typeof payload === 'string') {
+      try {
+        payload = JSON.parse(payload);
+      } catch (parseError) {
+        console.warn('Received string payload that is not valid JSON:', parseError.message);
+        return res.status(400).json({ message: 'Invalid JSON payload' });
+      }
+    }
+
+    if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+      return res.status(400).json({ message: 'Request body must be an object' });
+    }
+
+    const preferenceSource = payload.preferences && typeof payload.preferences === 'object'
+      ? payload.preferences
+      : payload;
+
+    if (!preferenceSource || typeof preferenceSource !== 'object' || Array.isArray(preferenceSource)) {
+      return res.status(400).json({ message: 'Preferences must be provided as an object' });
+    }
+
+    const preferences = preferenceSource;
+
+    const allowedFields = new Set(['defaultTrack', 'showCompleted', 'sortBy']);
+    const allowedSortValues = ['order', 'addedAt', 'difficulty', 'track'];
+
+    const sanitizedPreferences = {};
+    for (const [key, value] of Object.entries(preferences)) {
+      if (!allowedFields.has(key)) continue;
+
+      if (key === 'sortBy' && value && !allowedSortValues.includes(value)) {
+        return res.status(400).json({ message: 'Invalid sort option' });
+      }
+
+      sanitizedPreferences[key] = value;
+    }
+
+    if (Object.keys(sanitizedPreferences).length === 0) {
+      return res.status(400).json({ message: 'No valid preferences provided' });
     }
 
     let userRoadmap = await UserRoadmap.findOne({ userId });
     
     if (!userRoadmap) {
-      userRoadmap = new UserRoadmap({ userId, tasks: [] });
+      userRoadmap = new UserRoadmap({
+        userId,
+        tasks: [],
+        preferences: {
+          defaultTrack: '',
+          showCompleted: true,
+          sortBy: 'order'
+        }
+      });
     }
 
-    userRoadmap.preferences = { ...userRoadmap.preferences, ...preferences };
+    const existingPreferences = userRoadmap.preferences && typeof userRoadmap.preferences === 'object'
+      ? (typeof userRoadmap.preferences.toObject === 'function'
+        ? userRoadmap.preferences.toObject()
+        : userRoadmap.preferences)
+      : {};
+
+    userRoadmap.preferences = {
+      ...existingPreferences,
+      ...sanitizedPreferences
+    };
+
+    userRoadmap.markModified('preferences');
     await userRoadmap.save();
 
     res.json({ 

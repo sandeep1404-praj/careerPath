@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import TaskItem from './TaskItem.jsx';
 import { useRoadmap } from '../../contexts/RoadmapContext.jsx';
 
@@ -6,9 +6,7 @@ const UserRoadmapCard = ({ className = '' }) => {
   const { 
     userRoadmap, 
     preferences, 
-    updatePreferences,
-    getTasksByStatus,
-    reorderTasks
+    updatePreferences
   } = useRoadmap();
 
   const [sortBy, setSortBy] = useState(preferences.sortBy || 'order');
@@ -50,9 +48,10 @@ const UserRoadmapCard = ({ className = '' }) => {
     switch (sortBy) {
       case 'addedAt':
         return new Date(b.addedAt) - new Date(a.addedAt);
-      case 'difficulty':
+      case 'difficulty': {
         const difficultyOrder = { 'Beginner': 1, 'Intermediate': 2, 'Advanced': 3 };
         return (difficultyOrder[a.difficulty] || 0) - (difficultyOrder[b.difficulty] || 0);
+      }
       case 'track':
         return (a.roadmapTrack || '').localeCompare(b.roadmapTrack || '');
       case 'order':

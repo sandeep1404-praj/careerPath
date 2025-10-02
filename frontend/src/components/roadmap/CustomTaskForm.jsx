@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useRoadmap } from '../../contexts/RoadmapContext.jsx';
 
 const CustomTaskForm = ({ onClose, className = '' }) => {
@@ -56,7 +56,7 @@ const CustomTaskForm = ({ onClose, className = '' }) => {
     try {
       new URL(string);
       return true;
-    } catch (_) {
+    } catch {
       return false;
     }
   };
@@ -106,7 +106,8 @@ const CustomTaskForm = ({ onClose, className = '' }) => {
       if (success) {
         onClose();
       }
-    } catch (error) {
+    } catch (err) {
+      console.error('Failed to create custom task', err);
       setErrors({ submit: 'Failed to create task. Please try again.' });
     } finally {
       setIsSubmitting(false);
