@@ -6,10 +6,13 @@ import cors from 'cors';
 import connectDB from './config/db.js';
 import authRoutes from './routes/auth.js';
 import roadmapRoutes from "./routes/roadmap.js";
+import tasksRoutes from './routes/tasks.js';
+import userRoutes from './routes/user.js';
 
 dotenv.config();
 const app = express();
 
+import { startTaskEmailScheduler } from './utils/taskEmailScheduler.js';
 // CORS configuration
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:5173',
@@ -57,7 +60,9 @@ connectDB().then(() => {
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/user', userRoutes);
 app.use("/api/roadmaps", roadmapRoutes);
+app.use('/api/tasks', tasksRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
@@ -65,3 +70,5 @@ app.listen(PORT, () => {
   console.log(`📧 Email verification: ${process.env.EMAIL_USER ? 'Configured' : 'Not configured'}`);
   console.log(`🌐 Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:5173'}`);
 });
+
+  startTaskEmailScheduler();

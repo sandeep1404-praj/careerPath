@@ -175,6 +175,9 @@ export function Navbar() {
                 <span className="text-sm text-gray-700">
                   Welcome, {user?.name || 'User'}!
                 </span>
+                <a  href="/settings"  >
+                  Settings
+                </a>
                 <Button variant="outline" onClick={handleLogout}>
                   Logout
                 </Button>

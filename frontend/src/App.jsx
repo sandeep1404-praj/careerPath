@@ -8,6 +8,7 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import VerifyEmail from "./pages/VerifyEmail";
 import Dashboard from "./pages/Dashboard";
+import SettingsPage from './pages/SettingsPage'; // Import SettingsPage
 import NotFound from "./pages/NotFound";
 import ForgotPassword from "./pages/ForgotPassword";
 import BlogSection from "@/components/BlogSection";
@@ -53,6 +54,7 @@ const App = () => {
             </ProtectedRoute>
           ),
         },
+        { path: "/settings", element: <SettingsPage /> }, // Add SettingsPage route
         { path: "/forgot-password", element: <ForgotPassword /> },
         { path: "/reset-password", element: <ResetPassword /> },
       ],

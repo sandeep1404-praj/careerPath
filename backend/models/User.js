@@ -9,7 +9,8 @@ const userSchema = new mongoose.Schema({
   verificationTokenExpires: Date,
   resetPasswordToken: { type: String },
   resetPasswordExpires: { type: Date },
-  createdAt: { type: Date, default: Date.now }
+  createdAt: { type: Date, default: Date.now },
+  notificationEnabled: { type: Boolean, default: true }
 });
 
 const User = mongoose.model('User', userSchema);

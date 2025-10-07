@@ -169,10 +169,29 @@ export const addTaskToUserRoadmap = async (req, res) => {
 
     userRoadmap.tasks.push(newTask);
     console.log('💾 Saving user roadmap...');
-    
     const savedRoadmap = await userRoadmap.save();
     console.log('✅ Task added successfully');
-    
+
+    // Send motivational email when task is added
+    try {
+      const User = (await import('../models/User.js')).default;
+      const user = await User.findById(userId);
+      if (user && user.notificationEnabled) {
+        const { sendTaskMotivationEmail } = await import('../utils/emailService.js');
+        await sendTaskMotivationEmail({
+          to: user.email,
+          task: {
+            title: newTask.name,
+            description: newTask.description,
+            estimatedTime: newTask.estimatedTime || '',
+          }
+        });
+        console.log('📧 Motivational email sent to', user.email);
+      }
+    } catch (mailErr) {
+      console.error('❌ Error sending motivational email:', mailErr);
+    }
+
     res.status(201).json({ 
       message: 'Task added successfully', 
       task: newTask,
@@ -504,8 +523,23 @@ export const addRoadmapToUser = async (req, res) => {
 
     await userRoadmap.save();
 
+    // Send a single motivational email with roadmap name and all task names
+    try {
+      const User = (await import('../models/User.js')).default;
+      const user = await User.findById(userId);
+      if (user && user.notificationEnabled) {
+        const { sendTaskMotivationEmail } = await import('../utils/emailService.js');
+        await sendTaskMotivationEmail({
+          to: user.email,
+          roadmapName: roadmapName,
+          tasks: tasksToAdd
+        });
+      }
+    } catch (mailErr) {
+      console.error('❌ Error sending roadmap tasks email:', mailErr);
+    }
+
     console.log(`✅ Successfully added roadmap "${roadmapName}" with ${tasksToAdd.length} tasks`);
-    
     res.json({ 
       message: `Roadmap "${roadmapName}" added successfully`,
       roadmap: roadmapInfo,
