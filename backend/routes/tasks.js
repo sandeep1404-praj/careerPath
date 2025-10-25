@@ -10,7 +10,7 @@ router.get('/', async (req, res) => {
   const { userId } = req.query;
   try {
     const tasks = await Roadmap.find({ userId });
-    res.json(tasks);
+    res.json("task added successfully");
   } catch (err) {
     res.status(500).json({ error: 'Server error' });
   }

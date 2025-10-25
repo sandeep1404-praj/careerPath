@@ -2,6 +2,8 @@ import { Link, useLocation } from 'react-router-dom';
 import { Button } from "./ui/Button";
 import { useAuth } from '@/contexts/AuthContext';
 import { useState, useRef, useEffect } from 'react';
+import dashIconApng from '../assets/Cube 3d.svg';
+import dashIconGif from '../assets/Cube 3d.gif';
 import gsap from 'gsap';
 
 export function Navbar() {
@@ -10,6 +12,144 @@ export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const mobileMenuRef = useRef(null);
   const menuItemsRef = useRef([]);
+  const dashButtonRef = useRef(null);
+  const dropdownRef = useRef(null);
+  // dashboard icon menu
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+  const [dashIconSrc, setDashIconSrc] = useState(dashIconApng);
+  
+  // Scroll state
+  const [isScrolled, setIsScrolled] = useState(false);
+  const navbarRef = useRef(null);
+  const logoRef = useRef(null);
+  const welcomeRef = useRef(null);
+
+  const handleDashEnter = () => {
+    setDashIconSrc(dashIconGif);
+    setMenuOpen(true);
+  };
+  const handleDashLeave = () => {
+    setDashIconSrc(dashIconApng);
+  };
+
+  const handleMenuAreaLeave = () => {
+    setMenuOpen(false);
+    setDashIconSrc(dashIconApng);
+  };
+
+  // Scroll effect to shrink navbar
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollPosition = window.scrollY;
+      const shouldShrink = scrollPosition > 50;
+      
+      if (shouldShrink !== isScrolled) {
+        setIsScrolled(shouldShrink);
+        
+        if (navbarRef.current) {
+          if (shouldShrink) {
+            // Shrink navbar with margin - 60% width centered
+            gsap.to(navbarRef.current, {
+              width: '60vw',
+              marginLeft: '20vw',
+              marginRight: '20vw',
+              borderRadius: '24px',
+              marginTop: '12px',
+              duration: 0.5,
+              ease: 'power2.out'
+            });
+          } else {
+            // Expand navbar to full width
+            gsap.to(navbarRef.current, {
+              width: '100%',
+              marginLeft: '0',
+              marginRight: '0',
+              borderRadius: '0px',
+              marginTop: '0px',
+              duration: 0.5,
+              ease: 'power2.out'
+            });
+          }
+        }
+        
+        // Animate logo text
+        if (logoRef.current) {
+          if (shouldShrink) {
+            gsap.to(logoRef.current, {
+              opacity: 0,
+              duration: 0.2,
+              ease: 'power2.in',
+              onComplete: () => {
+                if (logoRef.current) {
+                  logoRef.current.textContent = 'CP';
+                  gsap.to(logoRef.current, {
+                    opacity: 1,
+                    duration: 0.2,
+                    ease: 'power2.out'
+                  });
+                }
+              }
+            });
+          } else {
+            gsap.to(logoRef.current, {
+              opacity: 0,
+              duration: 0.2,
+              ease: 'power2.in',
+              onComplete: () => {
+                if (logoRef.current) {
+                  logoRef.current.textContent = 'CareerPath';
+                  gsap.to(logoRef.current, {
+                    opacity: 1,
+                    duration: 0.2,
+                    ease: 'power2.out'
+                  });
+                }
+              }
+            });
+          }
+        }
+        
+        // Animate welcome message
+        if (welcomeRef.current) {
+          if (shouldShrink) {
+            gsap.to(welcomeRef.current, {
+              opacity: 0,
+              width: 0,
+              marginRight: 0,
+              duration: 0.3,
+              ease: 'power2.in'
+            });
+          } else {
+            gsap.to(welcomeRef.current, {
+              opacity: 1,
+              width: 'auto',
+              marginRight: '1rem',
+              duration: 0.3,
+              ease: 'power2.out'
+            });
+          }
+        }
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [isScrolled]);
+
+  // animate dashboard dropdown with GSAP
+  useEffect(() => {
+    if (!dropdownRef.current || !dashButtonRef.current) return;
+
+    if (menuOpen) {
+      gsap.killTweensOf(dropdownRef.current);
+      gsap.fromTo(dropdownRef.current, { y: -8, opacity: 0, scale: 0.98 }, { y: 0, opacity: 1, scale: 1, duration: 0.22, ease: 'power3.out' });
+      gsap.to(dashButtonRef.current, { rotate: 6, scale: 1.03, duration: 0.18, ease: 'power2.out' });
+    } else {
+      gsap.to(dropdownRef.current, { y: -8, opacity: 0, scale: 0.98, duration: 0.16, ease: 'power2.in' });
+      gsap.to(dashButtonRef.current, { rotate: 0, scale: 1, duration: 0.18, ease: 'power2.in' });
+    }
+  }, [menuOpen]);
 
   const handleLogout = () => {
     logout();
@@ -111,20 +251,52 @@ export function Navbar() {
     }
   }, [mobileMenuOpen]);
 
+  // Close user menu on outside click or ESC
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setMenuOpen(false);
+      }
+    };
+
+    const handleKey = (e) => {
+      if (e.key === 'Escape') setMenuOpen(false);
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKey);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKey);
+    };
+  }, []);
+
   return (
-    <nav className="w-full border-b bg-background/80 backdrop-blur-sm sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+    <nav className="w-full sticky top-0 z-50">
+      <div 
+        ref={navbarRef}
+        className="border-b bg-background/80 backdrop-blur-sm"
+        style={{ 
+          width: '100%',
+          borderRadius: '0px',
+          marginTop: '0px',
+          marginLeft: '0',
+          marginRight: '0',
+          transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
+        }}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center h-16">
           {/* Logo */}
-          <div className="flex items-center">
+          <div className="flex items-center flex-shrink-0">
             <Link to="/" className="flex-shrink-0">
-              <span className="text-2xl font-bold text-foreground">CareerCompass</span>
+              <span ref={logoRef} className="text-2xl font-bold text-foreground">CareerPath</span>
             </Link>
           </div>
 
-          {/* Navigation Links */}
-          <div className="hidden md:block">
-            <div className="ml-10 flex items-baseline space-x-8">
+          {/* Navigation Links - Centered */}
+          <div className="hidden md:flex flex-1 justify-center">
+            <div className="flex items-baseline space-x-8">
               <Link 
                 to="/" 
                 className={getLinkClasses('/')}
@@ -149,64 +321,71 @@ export function Navbar() {
               >
                 Roadmaps
               </Link>
-              {isAuthenticated && (
-                <Link 
-                  to="/dashboard" 
-                  className={getLinkClasses('/dashboard')}
-                >
-                  Dashboard
-                </Link>
-              )}
-              {isAuthenticated && (
-                <Link 
-                  to="/profile" 
-                  className={getLinkClasses('/profile')}
-                >
-                  Profile
-                </Link>
-              )}
+              
             </div>
           </div>
 
           {/* Login/Signup Buttons or User Menu */}
-          <div className="hidden md:flex items-center space-x-4">
+          <div className="hidden md:flex items-center space-x-4 flex-shrink-0">
             {isAuthenticated ? (
               <div className="flex items-center space-x-4">
-                <span className="text-sm text-gray-700">
-                  Welcome, {user?.name || 'User'}!
-                </span>
-                <a  href="/settings"  >
-                  Settings
-                </a>
-                <Button variant="outline" onClick={handleLogout}>
-                  Logout
-                </Button>
+                
+
+                <div className="relative" ref={menuRef}>
+                  <button
+                    ref={dashButtonRef}
+                    onClick={() => setMenuOpen((s) => !s)}
+                    className="p-1 rounded focus:outline-none focus:ring-2 focus:ring-primary"
+                    aria-haspopup="true"
+                    aria-expanded={menuOpen}
+                    onMouseEnter={handleDashEnter}
+                    onMouseLeave={handleDashLeave}
+                    onFocus={handleDashEnter}
+                    onBlur={handleDashLeave}
+                  >
+                    <img src={dashIconSrc} alt="dashboard menu" className="w-8 h-8 object-contain" />
+                  </button>
+
+                  {/* Dropdown */}
+                  <div
+                    ref={dropdownRef}
+                    className={`absolute right-0 mt-2 w-40 bg-background/70 rounded shadow-lg py-1 z-50 backdrop-blur-sm ${menuOpen ? 'block' : 'hidden'}`}
+                    role="menu"
+                    aria-label="User menu"
+                  >
+                    <Link to="/profile" className="block px-4 py-2 text-sm text-foreground hover:bg-slate-700" onClick={() => setMenuOpen(false)}>Profile</Link>
+                    <Link to="/settings" className="block px-4 py-2 text-sm text-foreground hover:bg-slate-700" onClick={() => setMenuOpen(false)}>Settings</Link>
+                  </div>
+                </div>
+
+                <Button variant="outline" onClick={handleLogout}>Logout</Button>
               </div>
             ) : (
               <>
-                <Link to="/login">
-                  <Button variant="ghost">Login</Button>
-                </Link>
-                <Link to="/signup">
-                  <Button>Sign Up</Button>
-                </Link>
+                <Link to="/login"><Button variant="ghost">Login</Button></Link>
+                <Link to="/signup"><Button>Sign Up</Button></Link>
               </>
             )}
           </div>
 
           {/* Mobile menu button */}
-          <div className="md:hidden z-50">
+          <div className="md:hidden ml-auto">
             <button 
               type="button"
               onClick={toggleMobileMenu}
-              className="p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white relative z-50"
+              className="p-2 rounded-md text-foreground focus:outline-none focus:ring-2 focus:ring-foreground/20 transition-colors"
               aria-label="Toggle mobile menu"
             >
               <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+                {mobileMenuOpen ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+                )}
               </svg>
             </button>
           </div>
+        </div>
         </div>
       </div>
       
@@ -255,14 +434,25 @@ export function Navbar() {
             Roadmaps
           </Link>
           {isAuthenticated && (
-            <Link 
-              to="/dashboard" 
-              className={getLinkClasses('/dashboard', 'block py-2 text-base md:text-lg font-medium')}
-              onClick={toggleMobileMenu}
-              ref={(el) => (menuItemsRef.current[3] = el)}
-            >
-              Dashboard
-            </Link>
+            <>
+              
+              <Link
+                to="/profile"
+                className={getLinkClasses('/profile', 'block py-2 text-base md:text-lg font-medium')}
+                onClick={toggleMobileMenu}
+                ref={(el) => (menuItemsRef.current[5] = el)}
+              >
+                Profile
+              </Link>
+              <Link
+                to="/settings"
+                className={getLinkClasses('/settings', 'block py-2 text-base md:text-lg font-medium')}
+                onClick={toggleMobileMenu}
+                ref={(el) => (menuItemsRef.current[6] = el)}
+              >
+                Settings
+              </Link>
+            </>
           )}
           
           <div className="pt-4 border-t border-slate-700 mt-4">

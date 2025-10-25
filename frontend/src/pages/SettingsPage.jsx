@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { authAPI } from '../services/api';
 import toast from '../utils/toast';
 import { User, Mail, Target, Bell, BellOff, Save, Settings } from 'lucide-react';
 
@@ -8,10 +8,9 @@ const SettingsPage = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // Fetch user profile (replace with actual userId logic)
-    const userId = localStorage.getItem('userId');
-    axios.get(`/api/auth/profile?userId=${userId}`)
-      .then(res => setUser(res.data))
+    // Fetch user profile (authenticated)
+    authAPI.getProfile()
+      .then(res => setUser(res.user || res))
       .catch(() => toast.error('Failed to load user info'));
   }, []);
 
@@ -28,9 +27,9 @@ const SettingsPage = () => {
     setLoading(true);
     try {
       // Save profile
-      await axios.put('/api/auth/profile', user);
+      await authAPI.updateProfile(user);
       // Save notification toggle
-      await axios.patch('/api/user/notification', { userId: user._id, enabled: user.notificationEnabled });
+      await authAPI.updateNotification(user._id, user.notificationEnabled);
       toast.success('Settings saved!');
     } catch {
       toast.error('Failed to save settings');

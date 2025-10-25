@@ -58,20 +58,80 @@ export const sendOtpEmail = async (email, otp) => {
 
 
 export async function sendTaskMotivationEmail({ to, task }) {
+  try {
+    if (!to) {
+      console.error('sendTaskMotivationEmail: missing `to` address');
+      return;
+    }
+    if (!task) {
+      console.error('sendTaskMotivationEmail: missing `task` object for email to', to);
+      return;
+    }
+
+    const randomLine = motivationalLines[Math.floor(Math.random() * motivationalLines.length)];
+    const transporter = createTransporter();
+
+    const title = task.title || task.name || 'Untitled Task';
+    const description = task.description || '';
+    const estimated = task.estimatedTime || '';
+
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to,
+      subject: `Reminder: ${title}`,
+      html: `
+      <!DOCTYPE html>
+      <html>
+      <body style="font-family:'Segoe UI', sans-serif; background:#f4f6f8; padding:20px;">
+        <div style="max-width:600px; margin:auto; background:#fff; padding:30px; border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,0.08);">
+          <h2 style="color:#2c3e50;">📌 ${title}</h2>
+          <p style="color:#555;">${description}</p>
+          <p><strong>Estimated Time:</strong> ${estimated}</p>
+          <hr style="border:none; border-top:1px solid #eee; margin:20px 0;">
+          <p style="color:green; font-style:italic;">💡 ${randomLine}</p>
+          <p style="color:#888; font-size:14px;">CareerCompass Team</p>
+        </div>
+      </body>
+      </html>
+    `
+    };
+
+    await transporter.sendMail(mailOptions);
+  } catch (err) {
+    console.error('Error sending motivational email:', err);
+  }
+}
+
+// Send a motivational email summarizing a roadmap and its tasks
+export async function sendRoadmapMotivationEmail({ to, roadmapName, tasks = [] }) {
   const randomLine = motivationalLines[Math.floor(Math.random() * motivationalLines.length)];
   const transporter = createTransporter();
+
+  const tasksHtml = tasks.map(t => {
+    const title = t.name || t.title || 'Untitled Task';
+    const desc = t.description || '';
+    const est = t.estimatedTime || '';
+    return `
+      <li style="margin-bottom:8px;">
+        <strong>${title}</strong>
+        ${desc ? `<div style="color:#555;margin-top:4px;">${desc}</div>` : ''}
+        ${est ? `<div style="color:#777;font-size:13px;margin-top:2px;">Estimated: ${est}</div>` : ''}
+      </li>
+    `;
+  }).join('');
+
   const mailOptions = {
     from: process.env.EMAIL_USER,
     to,
-    subject: `Reminder: ${task.title}`,
+    subject: `New roadmap added: ${roadmapName}`,
     html: `
       <!DOCTYPE html>
       <html>
       <body style="font-family:'Segoe UI', sans-serif; background:#f4f6f8; padding:20px;">
         <div style="max-width:600px; margin:auto; background:#fff; padding:30px; border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,0.08);">
-          <h2 style="color:#2c3e50;">📌 ${task.title}</h2>
-          <p style="color:#555;">${task.description}</p>
-          <p><strong>Estimated Time:</strong> ${task.estimatedTime}</p>
+          <h2 style="color:#2c3e50;">📚 ${roadmapName} added to your collection</h2>
+          <p style="color:#555;">Here are the tasks that were added with this roadmap:</p>
+          <ul style="color:#333;">${tasksHtml}</ul>
           <hr style="border:none; border-top:1px solid #eee; margin:20px 0;">
           <p style="color:green; font-style:italic;">💡 ${randomLine}</p>
           <p style="color:#888; font-size:14px;">CareerCompass Team</p>
@@ -84,7 +144,7 @@ export async function sendTaskMotivationEmail({ to, task }) {
   try {
     await transporter.sendMail(mailOptions);
   } catch (err) {
-    console.error('Error sending motivational email:', err);
+    console.error('Error sending roadmap motivational email:', err);
   }
 }
 

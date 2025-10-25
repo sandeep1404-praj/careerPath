@@ -1,11 +1,25 @@
 import React, { useState } from 'react';
 import { useRoadmap } from '../../contexts/RoadmapContext.jsx';
-
+import deleteIcon from '../../assets/delete.svg';
+import deleteIcongif from '../../assets/delete.gif';
 const TaskItem = ({ task, isUserTask = false, showAddButton = false, className = '' }) => {
   const { addTaskToUser, updateTask, isTaskAdded } = useRoadmap();
   const [isUpdating, setIsUpdating] = useState(false);
   const [showNotes, setShowNotes] = useState(false);
   const [notes, setNotes] = useState(task.notes || '');
+  // Icon swap: show static image by default, animated gif on hover/focus/touch
+  const staticIcon = '/note.svg';
+  const gifIcon = '/note.gif';
+  const [iconSrc, setIconSrc] = useState(staticIcon);
+
+  const handleIconEnter = () => setIconSrc(gifIcon);
+  const handleIconLeave = () => setIconSrc(staticIcon);
+  //delete icon
+  const staticIconDelete = deleteIcon;
+  const gifIconDelete = deleteIcongif;
+  const [iconDeleteSrc, setIconDeleteSrc] = useState(staticIconDelete);
+  const handleIconDeleteEnter = () => setIconDeleteSrc(gifIconDelete);
+  const handleIconDeleteLeave = () => setIconDeleteSrc(staticIconDelete);
 
   const isAdded = isUserTask || isTaskAdded(task.id || task.taskId);
 
@@ -122,10 +136,21 @@ const TaskItem = ({ task, isUserTask = false, showAddButton = false, className =
             <>
               <button
                 onClick={() => setShowNotes(!showNotes)}
-                className="p-1 text-gray-400 hover:text-white transition-colors"
+                className="p-1 text-gray-400 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
                 title="Toggle notes"
+                aria-pressed={showNotes}
               >
-                📝
+                <img
+                  src={iconSrc}
+                  alt="toggle notes"
+                  className="w-13 h-6 object-contain cursor-pointer transition-transform duration-150 ease-in-out"
+                  onMouseEnter={handleIconEnter}
+                  onMouseLeave={handleIconLeave}
+                  onFocus={handleIconEnter}
+                  onBlur={handleIconLeave}
+                  onTouchStart={handleIconEnter}
+                  onTouchEnd={handleIconLeave}
+                />
               </button>
               <button
                 onClick={handleRemoveTask}
@@ -133,7 +158,17 @@ const TaskItem = ({ task, isUserTask = false, showAddButton = false, className =
                 className="p-1 text-red-400 hover:text-red-300 transition-colors"
                 title="Remove task"
               >
-                🗑️
+                <img
+                  src={iconDeleteSrc}
+                  alt="remove task"
+                  className="w-13 h-6 object-contain cursor-pointer transition-transform duration-150 ease-in-out"
+                  onMouseEnter={handleIconDeleteEnter}
+                  onMouseLeave={handleIconDeleteLeave}
+                  onFocus={handleIconDeleteEnter}
+                  onBlur={handleIconDeleteLeave}
+                  onTouchStart={handleIconDeleteEnter}
+                  onTouchEnd={handleIconDeleteLeave}
+                />
               </button>
             </>
           )}

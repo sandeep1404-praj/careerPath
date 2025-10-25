@@ -43,19 +43,19 @@ router.get("/debug", async (req, res) => {
 });
 
 // Simple JSON body test endpoint (no auth required)
-router.post("/test-json", (req, res) => {
-  console.log('🧪 JSON Test endpoint hit');
-  console.log('req.body:', req.body);
-  console.log('req.body type:', typeof req.body);
-  console.log('Content-Type:', req.headers['content-type']);
+// // router.post("/test-json", (req, res) => {
+// //   console.log('🧪 JSON Test endpoint hit');
+// //   console.log('req.body:', req.body);
+// //   console.log('req.body type:', typeof req.body);
+// //   console.log('Content-Type:', req.headers['content-type']);
   
-  res.json({
-    message: 'JSON test successful',
-    receivedBody: req.body,
-    bodyType: typeof req.body,
-    contentType: req.headers['content-type']
-  });
-});
+//   res.json({
+//     message: 'JSON test successful',
+//     receivedBody: req.body,
+//     bodyType: typeof req.body,
+//     contentType: req.headers['content-type']
+//   });
+// });
 
 // IMPORTANT: All specific routes MUST come before any parameterized routes!
 
@@ -79,11 +79,11 @@ router.delete("/user/delete-roadmap/:roadmapId", authenticateToken, deleteRoadma
 
 // Test endpoint to debug request body
 router.post("/user/debug-body", authenticateToken, (req, res) => {
-  console.log('🔍 Debug body endpoint hit');
-  console.log('req.body:', req.body);
-  console.log('req.body type:', typeof req.body);
-  console.log('req.headers:', req.headers);
-  console.log('Content-Type:', req.headers['content-type']);
+  // console.log('🔍 Debug body endpoint hit');
+  // console.log('req.body:', req.body);
+  // console.log('req.body type:', typeof req.body);
+  // console.log('req.headers:', req.headers);
+  // console.log('Content-Type:', req.headers['content-type']);
   
   res.json({ 
     message: 'Debug successful',

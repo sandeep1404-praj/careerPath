@@ -3,13 +3,25 @@ const API_BASE_URL = 'http://localhost:5000/api';
 // Helper function for API requests
 const apiRequest = async (endpoint, options = {}) => {
   try {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
-      ...options,
-    });
+    // allow passing a token explicitly or fallback to localStorage token
+    const token = options.token || localStorage.getItem('token');
+
+    const headers = {
+      'Content-Type': 'application/json',
+      ...(options.headers || {}),
+    };
+
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+
+    // Do not send a body with GET requests
+    const fetchOptions = { ...options, headers };
+    if (fetchOptions.method && fetchOptions.method.toUpperCase() === 'GET') {
+      delete fetchOptions.body;
+    }
+
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, fetchOptions);
 
     const data = await response.json();
 
@@ -76,13 +88,34 @@ export const authAPI = {
     });
   },
 
-  // Get user profile
-  getProfile: async (token) => {
+  // Get user profile (uses token from localStorage or options.token)
+  getProfile: async () => {
     return apiRequest('/auth/profile', {
       method: 'GET',
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+    });
+  },
+
+  // Get user profile by userId query param (used by settings page)
+  getProfileByUserId: async (userId) => {
+    const query = userId ? `?userId=${encodeURIComponent(userId)}` : '';
+    return apiRequest(`/auth/profile${query}`, {
+      method: 'GET',
+    });
+  },
+
+  // Update user profile (expects full user object)
+  updateProfile: async (user) => {
+    return apiRequest('/auth/profile', {
+      method: 'PUT',
+      body: JSON.stringify(user),
+    });
+  },
+
+  // Update notification preference for a user
+  updateNotification: async (userId, enabled) => {
+    return apiRequest('/user/notification', {
+      method: 'PATCH',
+      body: JSON.stringify({ userId, enabled }),
     });
   },
 

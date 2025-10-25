@@ -97,13 +97,6 @@ const RoadmapFlow = ({ tasks = [], roadmap }) => {
           instance.fitView({ padding: 0.1 });
         }}
         style={{ background: '#111827', borderRadius: '12px' }}
-        panOnScroll={false}
-        zoomOnScroll={false}
-        zoomOnPinch={false}
-        panOnDrag={false}
-        nodesDraggable={false}
-        nodesConnectable={false}
-        elementsSelectable={false}
       >
         <Controls style={{ background: '#1F2937', color: '#f8f8f2', borderRadius: '6px' }} />
         <Background color="#374151" gap={24} size={1} />

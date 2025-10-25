@@ -40,13 +40,9 @@ app.use((req, res, next) => {
   next();
 });
 
-// Debug middleware to log all requests
+// Lightweight request logger
 app.use((req, res, next) => {
   console.log(`📝 ${req.method} ${req.path}`);
-  console.log('Headers:', req.headers);
-  console.log('Body:', req.body);
-  console.log('Raw body type:', typeof req.body);
-  console.log('Content-Type:', req.headers['content-type']);
   next();
 });
 

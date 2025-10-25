@@ -395,7 +395,7 @@ const ProfileRoadmapPage = () => {
             )}
 
             {/* Pending Tasks */}
-            {!graphView && pendingTasks.length > 0 && (
+            {/* {!graphView && pendingTasks.length > 0 && (
               <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
                 <h2 className="text-xl font-semibold mb-4 flex items-center">
                   <Circle className="w-5 h-5 mr-2 text-orange-400" />
@@ -412,7 +412,7 @@ const ProfileRoadmapPage = () => {
                   ))}
                 </div>
               </div>
-            )}
+            )} */}
 
             {/* Overview Snapshot */}
             <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
@@ -439,6 +439,7 @@ const ProfileRoadmapPage = () => {
           </div>
         </div>
       </div>
+      
     </div>
   );
 };

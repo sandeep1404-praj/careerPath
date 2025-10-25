@@ -44,7 +44,8 @@ router.post('/signup', async (req, res) => {
     if (process.env.EMAIL_USER && process.env.EMAIL_PASSWORD) {
       emailSent = await sendOtpEmail(email, otp);
     } else {
-      console.log('Email not configured. OTP for testing:', otp);
+      console.log('ℹ️ Email not configured — displaying OTP for local testing');
+      console.log(`OTP: ${otp}`);
     }
 
     if (!emailSent && process.env.EMAIL_USER) {
@@ -171,7 +172,8 @@ router.post('/resend-otp', async (req, res) => {
     if (process.env.EMAIL_USER && process.env.EMAIL_PASSWORD) {
       emailSent = await sendOtpEmail(email, otp);
     } else {
-      console.log('Email not configured. New OTP for testing:', otp);
+      console.log('ℹ️ Email not configured — displaying new OTP for local testing');
+      console.log(`OTP: ${otp}`);
     }
 
     if (!emailSent && process.env.EMAIL_USER) {
@@ -248,6 +250,38 @@ router.get('/profile', authenticateToken, async (req, res) => {
   try {
     const user = await User.findById(req.user._id).select('-password');
     res.json({ user });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// Update current user profile
+router.put('/profile', authenticateToken, async (req, res) => {
+  try {
+    const { name, email, track } = req.body;
+    // The authenticateToken middleware normally sets req.user._id
+    const userId = req.user && (req.user._id || req.user.id || req.user);
+    if (!userId) return res.status(400).json({ message: 'Invalid user token' });
+
+    const existingUser = await User.findById(userId);
+    if (!existingUser) return res.status(404).json({ message: 'User not found' });
+
+    // If email is changing, ensure uniqueness
+    if (email && email !== existingUser.email) {
+      const conflict = await User.findOne({ email });
+      if (conflict) return res.status(400).json({ message: 'Email already in use' });
+      existingUser.email = email;
+    }
+
+    if (name) existingUser.name = name;
+    if (track !== undefined) existingUser.track = track;
+
+    await existingUser.save();
+
+    const userObj = existingUser.toObject();
+    delete userObj.password;
+
+    res.json({ message: 'Profile updated', user: userObj });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

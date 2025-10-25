@@ -14,7 +14,8 @@ const AboutSection = () => {
   ];
 
   return (
-    <section className="py-24 bg-gray-900" id="about">
+    
+    <section className="py-24 bg-gray-900">
       <div className="max-w-6xl mx-auto px-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           {/* Left Content */}
@@ -36,6 +37,7 @@ const AboutSection = () => {
                 Career Gap
               </span>
             </h2>
+            
             
             <div className="space-y-6 text-lg text-muted-foreground">
               <p>

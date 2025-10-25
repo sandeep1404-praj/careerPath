@@ -6,12 +6,14 @@ import RoadmapPreviewSection from "@/components/RoadmapPreviewSection";
 import BlogSection from "@/components/BlogSection";
 import CTASection from "@/components/CTASection";
 import ChatbotButton from "@/components/ChatbotButton";
+import ScrollToTop from "../components/animation/ScrollToTop";
 // import Footer from "@/components/Footer";
 // import { Navbar } from "../components/Navbar";
 
 const Index = () => {
   return (
     <div className="min-h-screen">
+      <ScrollToTop />
       <HeroSection />
       <AboutSection />
       <FeaturesSection />
