@@ -1,0 +1,244 @@
+{
+  "info": {
+    "name": "Resume Builder API",
+    "description": "Complete API collection for Resume Builder Backend",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "resumeId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.token) {",
+                  "        pm.collectionVariables.set('token', response.token);",
+                  "        pm.collectionVariables.set('userId', response.user._id || response.user.id);",
+                  "        console.log('Token saved:', response.token);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "Login to get JWT token"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Resumes",
+      "item": [
+        {
+          "name": "Create Resume",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data._id) {",
+                  "        pm.collectionVariables.set('resumeId', response.data._id);",
+                  "        console.log('Resume ID saved:', response.data._id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Software Engineer Resume\",\n  \"thumbnail\": \"https://example.com/thumbnail.jpg\",\n  \"template\": {\n    \"theme\": \"modern\",\n    \"colorPalette\": [\"#3B82F6\", \"#1E40AF\", \"#FFFFFF\"]\n  },\n  \"profileInfo\": {\n    \"profilePreviewUrl\": \"https://example.com/profile.jpg\",\n    \"fullName\": \"John Doe\",\n    \"designation\": \"Full Stack Developer\",\n    \"summary\": \"Experienced developer with 5+ years in web development\"\n  },\n  \"contactInfo\": {\n    \"email\": \"john.doe@example.com\",\n    \"phoneNo\": \"+1234567890\",\n    \"location\": \"San Francisco, CA\",\n    \"linkedin\": \"https://linkedin.com/in/johndoe\",\n    \"github\": \"https://github.com/johndoe\",\n    \"website\": \"https://johndoe.dev\"\n  },\n  \"workExperience\": [\n    {\n      \"company\": \"Tech Corp\",\n      \"role\": \"Senior Developer\",\n      \"startingDate\": \"2020-01\",\n      \"endDate\": \"Present\",\n      \"description\": \"Led team of 5 developers in building scalable web applications\"\n    },\n    {\n      \"company\": \"StartupXYZ\",\n      \"role\": \"Junior Developer\",\n      \"startingDate\": \"2018-06\",\n      \"endDate\": \"2019-12\",\n      \"description\": \"Developed RESTful APIs using Node.js and Express\"\n    }\n  ],\n  \"education\": [\n    {\n      \"degree\": \"B.S. Computer Science\",\n      \"institute\": \"University of California\",\n      \"startDate\": \"2014-09\",\n      \"endDate\": \"2018-05\"\n    }\n  ],\n  \"skills\": [\n    { \"name\": \"JavaScript\", \"progress\": 90 },\n    { \"name\": \"React\", \"progress\": 85 },\n    { \"name\": \"Node.js\", \"progress\": 80 },\n    { \"name\": \"MongoDB\", \"progress\": 75 }\n  ],\n  \"projects\": [\n    {\n      \"title\": \"E-commerce Platform\",\n      \"description\": \"Built a full-stack e-commerce platform with React and Node.js\",\n      \"github\": \"https://github.com/johndoe/ecommerce\",\n      \"liveDemo\": \"https://myecommerce.com\"\n    }\n  ],\n  \"certificates\": [\n    {\n      \"title\": \"AWS Certified Developer\",\n      \"issuer\": \"Amazon Web Services\",\n      \"year\": \"2022\"\n    }\n  ],\n  \"languages\": [\n    { \"name\": \"English\", \"progress\": 100 },\n    { \"name\": \"Spanish\", \"progress\": 60 }\n  ],\n  \"interests\": [\"Open Source\", \"Machine Learning\", \"Photography\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/resumes",
+              "host": ["{{base_url}}"],
+              "path": ["api", "resumes"]
+            },
+            "description": "Create a new resume for the authenticated user"
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Resumes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/resumes?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "resumes"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get all resumes with pagination and optional search"
+          },
+          "response": []
+        },
+        {
+          "name": "Get User Resumes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/resumes/user/{{userId}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "resumes", "user", "{{userId}}"]
+            },
+            "description": "Get all resumes for a specific user"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Resume by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/resumes/{{resumeId}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "resumes", "{{resumeId}}"]
+            },
+            "description": "Get a single resume by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Resume",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Senior Software Engineer Resume - Updated\",\n  \"profileInfo\": {\n    \"fullName\": \"John Doe\",\n    \"designation\": \"Senior Full Stack Developer\",\n    \"summary\": \"Updated summary with 6+ years experience\"\n  },\n  \"skills\": [\n    { \"name\": \"JavaScript\", \"progress\": 95 },\n    { \"name\": \"React\", \"progress\": 90 },\n    { \"name\": \"Node.js\", \"progress\": 85 },\n    { \"name\": \"TypeScript\", \"progress\": 80 }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/resumes/{{resumeId}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "resumes", "{{resumeId}}"]
+            },
+            "description": "Update an existing resume"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Resume",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/resumes/{{resumeId}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "resumes", "{{resumeId}}"]
+            },
+            "description": "Delete a resume"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

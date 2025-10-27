@@ -8,6 +8,7 @@ import authRoutes from './routes/auth.js';
 import roadmapRoutes from "./routes/roadmap.js";
 import tasksRoutes from './routes/tasks.js';
 import userRoutes from './routes/user.js';
+import resumeRoutes from './routes/resumeRoutes.js';
 
 dotenv.config();
 const app = express();
@@ -59,6 +60,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use("/api/roadmaps", roadmapRoutes);
 app.use('/api/tasks', tasksRoutes);
+app.use('/api/resumes', resumeRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
