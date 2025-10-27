@@ -355,7 +355,7 @@ export function Navbar() {
                   >
                     <Link to="/profile" className="block px-4 py-2 text-sm text-foreground hover:bg-slate-700" onClick={() => setMenuOpen(false)}>Profile</Link>
                     <Link to="/settings" className="block px-4 py-2 text-sm text-foreground hover:bg-slate-700" onClick={() => setMenuOpen(false)}>Settings</Link>
-                    <Link to="/resume" className="block px-4 py-2 text-sm text-foreground hover:bg-slate-700" onClick={() => setMenuOpen(false)}>Resume Build</Link>
+                    <Link to="/resumes" className="block px-4 py-2 text-sm text-foreground hover:bg-slate-700" onClick={() => setMenuOpen(false)}>Resume Build</Link>
                   </div>
                 </div>
 
@@ -454,7 +454,7 @@ export function Navbar() {
                 Settings
               </Link>
               <Link
-                to="/resume"
+                to="/resumes"
                 className={getLinkClasses('/settings', 'block py-2 text-base md:text-lg font-medium')}
                 onClick={toggleMobileMenu}
                 ref={(el) => (menuItemsRef.current[6] = el)}

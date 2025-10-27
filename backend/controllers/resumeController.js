@@ -10,26 +10,23 @@ export const createResume = async (req, res) => {
   try {
     const userId = req.user._id || req.user.id;
 
-    // Only title is required, all other fields will be empty initially
-    const { title } = req.body;
+    // Accept payload from client but sanitize and merge with defaults
+    const payload = req.body || {};
+    const { title } = payload;
 
-    if (!title) {
+    if (!title || typeof title !== 'string' || title.trim() === '') {
       return res.status(400).json({
         success: false,
         message: 'Title is required',
       });
     }
 
-    // Create resume with empty fields initially
-    const resumeData = {
-      userId,
-      title,
+    // Defaults
+    const defaults = {
       thumbnail: '',
-      template: {
-        theme: '',
-        colorPalette: [],
-      },
+      template: { theme: '', colorPalette: [] },
       profileInfo: {
+        photo: '',
         profilePreviewUrl: '',
         fullName: '',
         designation: '',
@@ -52,7 +49,19 @@ export const createResume = async (req, res) => {
       interests: [],
     };
 
-    const resume = await Resume.create(resumeData);
+    // Build sanitized data by picking only allowed fields
+    const allowed = ['thumbnail','template','profileInfo','contactInfo','workExperience','education','skills','projects','certificates','languages','interests'];
+    const sanitized = {};
+    for (const key of allowed) {
+      if (payload[key] !== undefined) sanitized[key] = payload[key];
+    }
+
+    const resume = await Resume.create({
+      userId,
+      title: title.trim(),
+      ...defaults,
+      ...sanitized,
+    });
 
     res.status(201).json({
       success: true,

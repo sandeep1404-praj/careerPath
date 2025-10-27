@@ -16,6 +16,7 @@ const resumeSchema = new mongoose.Schema(
     },
 
     profileInfo: {
+      photo: { type: String }, // base64 encoded image
       profilePreviewUrl: { type: String },
       fullName: { type: String },
       designation: { type: String },

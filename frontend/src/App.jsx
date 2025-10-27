@@ -1,5 +1,6 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Toaster } from "react-hot-toast";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { RoadmapProvider } from "./contexts/RoadmapContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -20,6 +21,11 @@ import ResetPassword from "./pages/ResetPassword";
 import {AppLayout} from "./components/Layout/AppLayout";  
 import RoadmapPage from "./components/RoadmapPage";
 import ProfileRoadmapPage from "./pages/ProfilePage";
+
+// Resume pages
+import ResumeDashboard from "./pages/Resume/ResumeDashboard";
+import ResumeEditor from "./pages/Resume/ResumeEditor";
+import ResumePreview from "./pages/Resume/ResumePreview";
 
 const queryClient = new QueryClient();
 
@@ -54,6 +60,38 @@ const App = () => {
             </ProtectedRoute>
           ),
         },
+        {
+          path: "/resumes",
+          element: (
+            <ProtectedRoute>
+              <ResumeDashboard />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: "/resumes/new",
+          element: (
+            <ProtectedRoute>
+              <ResumeEditor />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: "/resumes/edit/:id",
+          element: (
+            <ProtectedRoute>
+              <ResumeEditor />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: "/resumes/preview/:id",
+          element: (
+            <ProtectedRoute>
+              <ResumePreview />
+            </ProtectedRoute>
+          ),
+        },
         { path: "/settings", element: <SettingsPage /> }, // Add SettingsPage route
         { path: "/forgot-password", element: <ForgotPassword /> },
         { path: "/reset-password", element: <ResetPassword /> },
@@ -66,6 +104,7 @@ const App = () => {
       <AuthProvider>
         <RoadmapProvider>
           <RouterProvider router={router} />
+          <Toaster />
         </RoadmapProvider>
       </AuthProvider>
     </QueryClientProvider>

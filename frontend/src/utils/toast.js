@@ -1,75 +1,114 @@
-// Simple Toast Notification System
-class ToastManager {
-  constructor() {
-    this.container = null;
-    this.init();
-  }
+﻿// Toast utility using react-hot-toast
+import toast from 'react-hot-toast';
 
-  init() {
-    // Create toast container if it doesn't exist
-    if (!document.getElementById('toast-container')) {
-      this.container = document.createElement('div');
-      this.container.id = 'toast-container';
-      this.container.className = 'toast-container';
-      document.body.appendChild(this.container);
-    } else {
-      this.container = document.getElementById('toast-container');
-    }
-  }
+// Re-export the toast instance with custom defaults
+const customToast = {
+  success: (message, options = {}) => {
+    return toast.success(message, {
+      duration: 3000,
+      position: 'top-right',
+      style: {
+        background: '#10B981',
+        color: '#fff',
+        padding: '16px',
+        borderRadius: '8px',
+      },
+      iconTheme: {
+        primary: '#fff',
+        secondary: '#10B981',
+      },
+      ...options,
+    });
+  },
 
-  show(message, type = 'info', duration = 5000) {
-    const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
-    
-    toast.innerHTML = `
-      <div class="toast-content">
-        <div class="toast-title">${type.charAt(0).toUpperCase() + type.slice(1)}</div>
-        <div class="toast-description">${message}</div>
-      </div>
-      <button class="toast-close" onclick="this.parentElement.remove()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="18" y1="6" x2="6" y2="18"></line>
-          <line x1="6" y1="6" x2="18" y2="18"></line>
-        </svg>
-      </button>
-    `;
+  error: (message, options = {}) => {
+    return toast.error(message, {
+      duration: 4000,
+      position: 'top-right',
+      style: {
+        background: '#EF4444',
+        color: '#fff',
+        padding: '16px',
+        borderRadius: '8px',
+      },
+      iconTheme: {
+        primary: '#fff',
+        secondary: '#EF4444',
+      },
+      ...options,
+    });
+  },
 
-    this.container.appendChild(toast);
+  info: (message, options = {}) => {
+    return toast(message, {
+      duration: 3000,
+      position: 'top-right',
+      icon: 'ℹ',
+      style: {
+        background: '#3B82F6',
+        color: '#fff',
+        padding: '16px',
+        borderRadius: '8px',
+      },
+      ...options,
+    });
+  },
 
-    // Auto remove after duration
-    setTimeout(() => {
-      if (toast.parentElement) {
-        toast.style.animation = 'slideOut 0.3s ease-out';
-        setTimeout(() => {
-          if (toast.parentElement) {
-            toast.remove();
-          }
-        }, 300);
+  warning: (message, options = {}) => {
+    return toast(message, {
+      duration: 3000,
+      position: 'top-right',
+      icon: '',
+      style: {
+        background: '#F59E0B',
+        color: '#fff',
+        padding: '16px',
+        borderRadius: '8px',
+      },
+      ...options,
+    });
+  },
+
+  loading: (message, options = {}) => {
+    return toast.loading(message, {
+      position: 'top-right',
+      style: {
+        background: '#6B7280',
+        color: '#fff',
+        padding: '16px',
+        borderRadius: '8px',
+      },
+      ...options,
+    });
+  },
+
+  promise: (promise, messages, options = {}) => {
+    return toast.promise(
+      promise,
+      {
+        loading: messages.loading || 'Loading...',
+        success: messages.success || 'Success!',
+        error: messages.error || 'Error occurred',
+      },
+      {
+        position: 'top-right',
+        style: {
+          padding: '16px',
+          borderRadius: '8px',
+        },
+        ...options,
       }
-    }, duration);
+    );
+  },
 
-    return toast;
-  }
+  dismiss: (toastId) => {
+    return toast.dismiss(toastId);
+  },
 
-  success(message, duration) {
-    return this.show(message, 'success', duration);
-  }
+  remove: (toastId) => {
+    return toast.remove(toastId);
+  },
+};
 
-  error(message, duration) {
-    return this.show(message, 'error', duration);
-  }
-
-  warning(message, duration) {
-    return this.show(message, 'warning', duration);
-  }
-
-  info(message, duration) {
-    return this.show(message, 'info', duration);
-  }
-}
-
-// Create global toast instance
-const toast = new ToastManager();
-
-// Export for use in components
-export default toast; 
+export { customToast as toast };
+export default customToast;
