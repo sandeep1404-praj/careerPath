@@ -13,6 +13,7 @@ const ResumeEditor = () => {
   const [resumeData, setResumeData] = useState(getInitialResumeData());
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState('form'); // 'form' or 'preview'
   const isEditMode = !!id;
   const previewRef = useRef(null);
 
@@ -141,64 +142,85 @@ const ResumeEditor = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
       {/* Fixed Header */}
       <div className="bg-white shadow-md border-b border-gray-200 sticky top-0 z-10 backdrop-blur-sm bg-white/95">
-        <div className="max-w-[1800px] mx-auto px-6 py-5">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-                <span className="text-3xl">
+        <div className="max-w-[1800px] mx-auto px-3 sm:px-6 py-3 sm:py-5">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <div className="flex-1">
+              <h1 className="text-lg sm:text-2xl font-bold text-gray-900 flex items-center gap-2 sm:gap-3">
+                <span className="text-2xl sm:text-3xl">
                   {isEditMode ? '✏️' : '📝'}
                 </span>
-                {isEditMode ? 'Edit Resume' : 'Create New Resume'}
+                <span className="truncate">{isEditMode ? 'Edit Resume' : 'Create New Resume'}</span>
               </h1>
               <Link
                 to="/resumes"
-                className="text-sm text-blue-600 hover:underline"
+                className="text-xs sm:text-sm text-blue-600 hover:underline"
               > Move to Dashboard</Link>
-              {/* <p className="text-sm text-gray-600 mt-1.5 flex items-center gap-2">
-                <svg className="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                </svg>
-                {isEditMode ? 'Update your resume details and see live preview' : 'Fill in your information - see live preview on the right'}
-              </p> */}
             </div>
-            <div className="flex gap-3">
+            <div className="flex gap-2 sm:gap-3 w-full sm:w-auto">
               <button
                 onClick={handleCancel}
-                className="px-5 py-2.5 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 text-sm font-medium shadow-sm hover:shadow"
+                className="flex-1 sm:flex-none px-3 sm:px-5 py-2 sm:py-2.5 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 text-xs sm:text-sm font-medium shadow-sm hover:shadow"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-200 disabled:from-blue-400 disabled:to-blue-400 disabled:cursor-not-allowed flex items-center gap-2 text-sm font-medium shadow-lg hover:shadow-xl"
+                className="flex-1 sm:flex-none px-4 sm:px-6 py-2 sm:py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-200 disabled:from-blue-400 disabled:to-blue-400 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-xs sm:text-sm font-medium shadow-lg hover:shadow-xl"
               >
                 {saving ? (
                   <>
                     <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                    Saving...
+                    <span className="hidden sm:inline">Saving...</span>
                   </>
                 ) : (
                   <>
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
-                    {isEditMode ? 'Save Changes' : 'Create Resume'}
+                    <span className="hidden sm:inline">{isEditMode ? 'Save Changes' : 'Create Resume'}</span>
+                    <span className="sm:hidden">Save</span>
                   </>
                 )}
               </button>
             </div>
+          </div>
+
+          {/* Mobile Tab Navigation */}
+          <div className="lg:hidden mt-3 flex gap-2 border-t pt-3">
+            <button
+              onClick={() => setActiveTab('form')}
+              className={`flex-1 py-2 px-4 rounded-lg font-medium text-sm transition-all ${
+                activeTab === 'form'
+                  ? 'bg-blue-600 text-white shadow-md'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              Edit Form
+            </button>
+            <button
+              onClick={() => setActiveTab('preview')}
+              className={`flex-1 py-2 px-4 rounded-lg font-medium text-sm transition-all ${
+                activeTab === 'preview'
+                  ? 'bg-blue-600 text-white shadow-md'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              Preview
+            </button>
           </div>
         </div>
       </div>
 
       {/* Split View Container */}
       <div className="max-w-[1800px] mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 min-h-[calc(100vh-90px)]">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
           {/* Left Side - Form Editor */}
-          <div className="bg-gradient-to-b from-white to-gray-50 border-r border-gray-200 overflow-y-auto shadow-inner" style={{ maxHeight: 'calc(100vh - 90px)' }}>
-            <div className="p-8">
-              <div className="max-w-3xl">
+          <div className={`${
+            activeTab === 'form' ? 'block' : 'hidden'
+          } lg:block bg-gradient-to-b from-white to-gray-50 lg:border-r border-gray-200 overflow-y-auto shadow-inner`} style={{ maxHeight: 'calc(100vh - 90px)' }}>
+            <div className="p-4 sm:p-6 lg:p-8">
+              <div className="max-w-3xl mx-auto">
                 <ResumeForm
                   resumeData={resumeData}
                   setResumeData={setResumeData}
@@ -208,10 +230,11 @@ const ResumeEditor = () => {
           </div>
 
           {/* Right Side - Live Preview */}
-          <div className="bg-gradient-to-br from-gray-100 via-gray-50 to-blue-50 overflow-y-auto sticky top-[90px]" style={{ maxHeight: 'calc(100vh - 90px)' }}>
-            <div className="p-8">
-              
-              <div ref={previewRef} className="bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-200 hover:shadow-3xl transition-shadow duration-300" style={{ aspectRatio: '8.5/11' }}>
+          <div className={`${
+            activeTab === 'preview' ? 'block' : 'hidden'
+          } lg:block bg-gradient-to-br from-gray-100 via-gray-50 to-blue-50 overflow-y-auto lg:sticky lg:top-[90px]`} style={{ maxHeight: 'calc(100vh - 90px)' }}>
+            <div className="p-4 sm:p-6 lg:p-8">
+              <div ref={previewRef} className="bg-white rounded-lg sm:rounded-2xl shadow-2xl overflow-hidden border border-gray-200 hover:shadow-3xl transition-shadow duration-300 mx-auto" style={{ maxWidth: '100%', aspectRatio: '8.5/11' }}>
                 <LiveResumePreview resumeData={resumeData} />
               </div>
             </div>

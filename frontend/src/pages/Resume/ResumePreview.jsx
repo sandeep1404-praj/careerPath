@@ -57,15 +57,47 @@ const ResumePreview = () => {
           width: 100%;
           background: white !important;
         }
-        /* Remove any black backgrounds */
+        /* Remove any black backgrounds but keep important ones */
         * {
           background-color: transparent !important;
         }
         .resume-preview-container {
           background: white !important;
         }
-        .bg-gradient-to-b {
+        /* Preserve gradient backgrounds */
+        .bg-gradient-to-b,
+        .bg-gradient-to-br {
           background: linear-gradient(to bottom, #f3e8ff, #faf5ff) !important;
+        }
+        .bg-gradient-to-br {
+          background: linear-gradient(to bottom right, #e9d5ff, #ddd6fe) !important;
+        }
+        /* Preserve skill proficiency boxes */
+        .bg-purple-600 {
+          background-color: #9333ea !important;
+        }
+        .bg-gray-200 {
+          background-color: #e5e7eb !important;
+        }
+        /* Preserve other purple backgrounds */
+        .bg-purple-100 {
+          background-color: #f3e8ff !important;
+        }
+        .bg-purple-200 {
+          background-color: #e9d5ff !important;
+        }
+        .bg-purple-300 {
+          background-color: #d8b4fe !important;
+        }
+        /* Preserve text colors */
+        .text-purple-700 {
+          color: #7e22ce !important;
+        }
+        .text-purple-600 {
+          color: #9333ea !important;
+        }
+        .text-purple-400 {
+          color: #c084fc !important;
         }
       }
     `;
@@ -99,55 +131,18 @@ const ResumePreview = () => {
     window.print();
   };
 
-  const handleDownload = async () => {
-    try {
-      const node = previewRef.current;
-      if (!node) {
-        toast.error('Preview not ready to download');
-        return;
-      }
-
-      const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
-        import('html2canvas'),
-        import('jspdf'),
-      ]);
-
-      const canvas = await html2canvas(node, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: '#ffffff',
-      });
-
-      const imgData = canvas.toDataURL('image/jpeg', 0.95);
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-
-      const imgWidth = pageWidth;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-      let position = 0;
-      if (imgHeight <= pageHeight) {
-        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
-      } else {
-        let remainingHeight = imgHeight;
-        let y = 0;
-        while (remainingHeight > 0) {
-          pdf.addImage(imgData, 'JPEG', 0, y, imgWidth, imgHeight, undefined, 'FAST');
-          remainingHeight -= pageHeight;
-          if (remainingHeight > 0) {
-            pdf.addPage();
-            y = -remainingHeight;
-          }
-        }
-      }
-
-      pdf.save(`${resume?.title || 'resume'}.pdf`);
-      toast.success('Downloaded PDF');
-    } catch (e) {
-      console.error('PDF download failed:', e);
-      toast.error('Failed to generate PDF');
-    }
+  const handleDownload = () => {
+    // Temporarily change document title for the PDF filename
+    const originalTitle = document.title;
+    document.title = resume?.title || 'resume';
+    
+    // Trigger print dialog (user can save as PDF)
+    window.print();
+    
+    // Restore original title after a short delay
+    setTimeout(() => {
+      document.title = originalTitle;
+    }, 100);
   };
 
   if (loading) {
@@ -180,27 +175,29 @@ const ResumePreview = () => {
   return (
     <div className="min-h-screen bg-gray-100 print:bg-white resume-preview-container">
       {/* Action Bar (hidden when printing) */}
-      <div className="print:hidden bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center">
+      <div className="print:hidden bg-white shadow-sm border-b border-gray-200 top-0 z-10">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-3 sm:py-4">
+          <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
             <button
               onClick={() => navigate('/resumes')}
-              className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
+              className="flex items-center justify-center sm:justify-start gap-2 text-gray-600 hover:text-gray-900 text-sm sm:text-base"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
-              Back to Dashboard
+              <span className="hidden sm:inline">Back to Dashboard</span>
+              <span className="sm:hidden">Dashboard</span>
             </button>
-            <div className="flex gap-3">
-              <button onClick={handleEdit} className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+            <div className="flex gap-2 sm:gap-3">
+              <button onClick={handleEdit} className="flex-1 sm:flex-none px-3 sm:px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-xs sm:text-sm">
                 Edit
               </button>
-              <button onClick={handlePrint} className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+              <button onClick={handlePrint} className="flex-1 sm:flex-none px-3 sm:px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-xs sm:text-sm">
                 Print
               </button>
-              <button onClick={handleDownload} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                Download PDF
+              <button onClick={handleDownload} className="flex-1 sm:flex-none px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-xs sm:text-sm">
+                <span className="hidden sm:inline">Download PDF</span>
+                <span className="sm:hidden">Download</span>
               </button>
             </div>
           </div>
@@ -208,14 +205,14 @@ const ResumePreview = () => {
       </div>
 
       {/* Resume Preview */}
-      <div className="max-w-5xl mx-auto py-8 px-4 sm:px-6 lg:px-8 print:p-0 print:max-w-none print:m-0">
+      <div className="max-w-5xl mx-auto py-4 sm:py-6 lg:py-8 px-3 sm:px-4 lg:px-8 print:p-0 print:max-w-none print:m-0">
         <div className="bg-white shadow-lg rounded-lg overflow-hidden print:shadow-none print:rounded-none">
-          <div ref={previewRef} className="bg-white p-8 text-sm print:p-0" style={{ minHeight: '297mm' }}>
+          <div ref={previewRef} className="bg-white p-2 sm:p-4 lg:p-6 text-[10px] sm:text-xs print:p-0 print:text-sm" style={{ minHeight: '297mm' }}>
             <div className="grid grid-cols-[35%_65%] gap-0 min-h-full">
               {/* Left Sidebar */}
-              <div className="bg-gradient-to-b from-purple-100 to-purple-50 p-6 -ml-8 -mt-8 -mb-8 print:m-0 print:p-6">
-                <div className="mb-6">
-                  <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-purple-200 to-purple-300 flex items-center justify-center overflow-hidden border-4 border-white shadow-lg">
+              <div className="bg-gradient-to-b from-purple-100 to-purple-50 p-3 sm:p-4 -ml-2 -mt-2 sm:-ml-4 sm:-mt-4 -mb-2 sm:-mb-4 lg:-mb-6 print:m-0 print:p-6">
+                <div className="mb-3 sm:mb-4">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg sm:rounded-xl bg-gradient-to-br from-purple-200 to-purple-300 flex items-center justify-center overflow-hidden border-2 border-white shadow-lg">
                     {(resume.profileInfo?.photo || resume.profileInfo?.profilePreviewUrl) ? (
                       <img src={resume.profileInfo.photo || resume.profileInfo.profilePreviewUrl} alt="Profile" className="w-full h-full object-cover" />
                     ) : (
@@ -226,12 +223,12 @@ const ResumePreview = () => {
                   </div>
                 </div>
 
-                <div className="mb-6">
-                  <div className="space-y-3">
+                <div className="mb-3 sm:mb-4">
+                  <div className="space-y-1.5 sm:space-y-2">
                     {resume.contactInfo?.email && (
-                      <div className="flex items-start gap-2">
-                        <div className="w-8 h-8 rounded-full bg-purple-200 flex items-center justify-center flex-shrink-0">
-                          <svg className="w-4 h-4 text-purple-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div className="flex items-start gap-1.5">
+                        <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-purple-200 flex items-center justify-center flex-shrink-0">
+                          <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-purple-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                           </svg>
                         </div>
@@ -335,27 +332,27 @@ const ResumePreview = () => {
               </div>
 
               {/* Right Content */}
-              <div className="p-6 pl-8 print:p-6 print:pl-8">
-                <div className="mb-6">
-                  <h1 className="text-3xl font-bold text-gray-900 mb-1">{resume.profileInfo?.fullName || 'John Doe'}</h1>
-                  <p className="text-lg text-gray-600 font-medium">{resume.profileInfo?.designation || 'UI UX Designer'}</p>
+              <div className="p-3 sm:p-4 md:pl-4 lg:pl-6 print:p-6 print:pl-8">
+                <div className="mb-3 sm:mb-4">
+                  <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-0.5">{resume.profileInfo?.fullName || 'John Doe'}</h1>
+                  <p className="text-sm sm:text-base text-gray-600 font-medium">{resume.profileInfo?.designation || 'UI UX Designer'}</p>
                 </div>
 
                 {resume.profileInfo?.summary && (
-                  <div className="mb-6">
-                    <h2 className="text-sm font-bold text-gray-900 mb-2 pb-1 border-b-2 border-gray-200">Professional Summary</h2>
+                  <div className="mb-3 sm:mb-4">
+                    <h2 className="text-xs sm:text-sm font-bold text-gray-900 mb-1.5 pb-0.5 border-b-2 border-gray-200">Professional Summary</h2>
                     <p className="text-xs text-gray-700 leading-relaxed">{resume.profileInfo.summary}</p>
                   </div>
                 )}
 
                 {resume.workExperience && resume.workExperience.length > 0 && (
-                  <div className="mb-6">
-                    <h2 className="text-sm font-bold text-gray-900 mb-3 pb-1 border-b-2 border-gray-200">Work Experience</h2>
+                  <div className="mb-3 sm:mb-4">
+                    <h2 className="text-xs sm:text-sm font-bold text-gray-900 mb-1.5 sm:mb-2 pb-0.5 border-b-2 border-gray-200">Work Experience</h2>
                     {resume.workExperience.map((exp, index) => (
                       <div key={index} className="mb-4">
                         <div className="flex justify-between items-start mb-1">
                           <div>
-                            <h3 className="text-xs font-bold text-gray-900">{exp.company || 'Company'}</h3>
+                            <h3 className="text-xs font-bold mb-1 text-gray-900">{exp.company || 'Company'}</h3>
                             <p className="text-xs text-gray-700 font-medium">{exp.role || 'Role'}</p>
                           </div>
                           <p className="text-xs text-gray-600 italic whitespace-nowrap ml-2">{exp.startingDate} - {exp.endDate || 'Present'}</p>
@@ -367,8 +364,8 @@ const ResumePreview = () => {
                 )}
 
                 {resume.projects && resume.projects.length > 0 && (
-                  <div className="mb-6">
-                    <h2 className="text-sm font-bold text-gray-900 mb-3 pb-1 border-b-2 border-gray-200">Projects</h2>
+                  <div className="mb-3 sm:mb-4">
+                    <h2 className="text-xs sm:text-sm font-bold text-gray-900 mb-1.5 sm:mb-2 pb-0.5 border-b-2 border-gray-200">Projects</h2>
                     {resume.projects.map((project, index) => (
                       <div key={index} className="mb-4">
                         <h3 className="text-xs font-bold text-gray-900">{project.title || 'Project'}</h3>
@@ -401,9 +398,9 @@ const ResumePreview = () => {
                 )}
 
                 {resume.skills && resume.skills.length > 0 && (
-                  <div className="mb-6">
-                    <h2 className="text-sm font-bold text-gray-900 mb-3 pb-1 border-b-2 border-gray-200">Skills</h2>
-                    <div className="grid grid-cols-2 gap-x-6 gap-y-3">
+                  <div className="mb-3 sm:mb-4">
+                    <h2 className="text-xs sm:text-sm font-bold text-gray-900 mb-1.5 sm:mb-2 pb-0.5 border-b-2 border-gray-200">Skills</h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 sm:gap-x-4 gap-y-1.5 sm:gap-y-2">
                       {resume.skills.map((skill, index) => (
                         <div key={index}>
                           <div className="flex justify-between items-center mb-1">
@@ -426,9 +423,9 @@ const ResumePreview = () => {
                 )}
 
                 {resume.certificates && resume.certificates.length > 0 && (
-                  <div className="mb-6">
-                    <h2 className="text-sm font-bold text-gray-900 mb-3 pb-1 border-b-2 border-gray-200">Certifications</h2>
-                    <div className="grid grid-cols-2 gap-4">
+                  <div className="mb-3 sm:mb-4">
+                    <h2 className="text-xs sm:text-sm font-bold text-gray-900 mb-1.5 sm:mb-2 pb-0.5 border-b-2 border-gray-200">Certifications</h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
                       {resume.certificates.map((cert, index) => (
                         <div key={index} className="flex items-start gap-2">
                           <div className="bg-purple-100 text-purple-700 px-2 py-1 rounded text-xs font-bold">{cert.year || '2024'}</div>

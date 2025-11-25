@@ -25,7 +25,7 @@ const EducationInput = ({ education, index, onChange, onRemove }) => {
               })
             }
             placeholder="e.g., B.Sc. Computer Science"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-black focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
         <div>
@@ -42,7 +42,7 @@ const EducationInput = ({ education, index, onChange, onRemove }) => {
               })
             }
             placeholder="e.g., XYZ University"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-black focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
         <div>
@@ -59,7 +59,7 @@ const EducationInput = ({ education, index, onChange, onRemove }) => {
               })
             }
             placeholder="e.g., Aug 2018"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-black focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
         <div>
@@ -76,7 +76,7 @@ const EducationInput = ({ education, index, onChange, onRemove }) => {
               })
             }
             placeholder="e.g., May 2022"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-black focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
       </div>

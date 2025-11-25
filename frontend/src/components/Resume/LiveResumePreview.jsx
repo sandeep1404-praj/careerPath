@@ -4,13 +4,13 @@ const LiveResumePreview = ({ resumeData }) => {
 
   return (
     <div className="w-full h-full bg-white overflow-auto">
-      <div className="p-8 text-sm">
+      <div className="p-2 sm:p-4 lg:p-6 text-[10px] sm:text-xs">
         <div className="grid grid-cols-[35%_65%] gap-0 min-h-full">
         {/* Left Sidebar - Purple/Lavender Background */}
-        <div className="bg-gradient-to-b from-purple-100 to-purple-50 p-6 -ml-8 -mt-8 -mb-8">
+        <div className="bg-gradient-to-b from-purple-100 to-purple-50 p-3 sm:p-4 -ml-2 -mt-2 sm:-ml-4 sm:-mt-4 -mb-2 sm:-mb-4 lg:-mb-6">
           {/* Profile Image */}
-          <div className="mb-6">
-            <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-purple-200 to-purple-300 flex items-center justify-center overflow-hidden border-4 border-white shadow-lg">
+          <div className="mb-3 sm:mb-4">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg sm:rounded-xl bg-gradient-to-br from-purple-200 to-purple-300 flex items-center justify-center overflow-hidden border-2 border-white shadow-lg">
               {(resumeData.profileInfo?.photo || resumeData.profileInfo?.profilePreviewUrl) ? (
                 <img 
                   src={resumeData.profileInfo.photo || resumeData.profileInfo.profilePreviewUrl} 
@@ -26,12 +26,12 @@ const LiveResumePreview = ({ resumeData }) => {
           </div>
 
           {/* Contact Info */}
-          <div className="mb-6">
-            <div className="space-y-3">
+          <div className="mb-3 sm:mb-4">
+            <div className="space-y-1.5 sm:space-y-2">
               {resumeData.contactInfo?.email && (
-                <div className="flex items-start gap-2">
-                  <div className="w-8 h-8 rounded-full bg-purple-200 flex items-center justify-center flex-shrink-0">
-                    <svg className="w-4 h-4 text-purple-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="flex items-start gap-1.5">
+                  <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-purple-200 flex items-center justify-center flex-shrink-0">
+                    <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-purple-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                     </svg>
                   </div>
@@ -41,9 +41,9 @@ const LiveResumePreview = ({ resumeData }) => {
                 </div>
               )}
               {resumeData.contactInfo?.phoneNo && (
-                <div className="flex items-start gap-2">
-                  <div className="w-8 h-8 rounded-full bg-purple-200 flex items-center justify-center flex-shrink-0">
-                    <svg className="w-4 h-4 text-purple-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="flex items-start gap-1.5">
+                  <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-purple-200 flex items-center justify-center flex-shrink-0">
+                    <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-purple-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                     </svg>
                   </div>
@@ -53,9 +53,9 @@ const LiveResumePreview = ({ resumeData }) => {
                 </div>
               )}
               {resumeData.contactInfo?.location && (
-                <div className="flex items-start gap-2">
-                  <div className="w-8 h-8 rounded-full bg-purple-200 flex items-center justify-center flex-shrink-0">
-                    <svg className="w-4 h-4 text-purple-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="flex items-start gap-1.5">
+                  <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-purple-200 flex items-center justify-center flex-shrink-0">
+                    <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-purple-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
@@ -144,21 +144,21 @@ const LiveResumePreview = ({ resumeData }) => {
         </div>
 
         {/* Right Content Area */}
-        <div className="p-6 pl-8">
+        <div className="p-3 sm:p-4 md:pl-4 lg:pl-6">
           {/* Name and Title */}
-          <div className="mb-6">
-            <h1 className="text-3xl font-bold text-gray-900 mb-1">
+          <div className="mb-3 sm:mb-4">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-0.5">
               {resumeData.profileInfo?.fullName || 'John Doe'}
             </h1>
-            <p className="text-lg text-gray-600 font-medium">
+            <p className="text-sm sm:text-base text-gray-600 font-medium">
               {resumeData.profileInfo?.designation || 'UI UX Designer'}
             </p>
           </div>
 
           {/* Professional Summary */}
           {resumeData.profileInfo?.summary && (
-            <div className="mb-6">
-              <h2 className="text-sm font-bold text-gray-900 mb-2 pb-1 border-b-2 border-gray-200">
+            <div className="mb-3 sm:mb-4">
+              <h2 className="text-xs sm:text-sm font-bold text-gray-900 mb-1.5 pb-0.5 border-b-2 border-gray-200">
                 Professional Summary
               </h2>
               <p className="text-xs text-gray-700 leading-relaxed">
@@ -169,15 +169,15 @@ const LiveResumePreview = ({ resumeData }) => {
 
           {/* Work Experience */}
           {resumeData.workExperience && resumeData.workExperience.length > 0 && (
-            <div className="mb-6">
-              <h2 className="text-sm font-bold text-gray-900 mb-3 pb-1 border-b-2 border-gray-200">
+            <div className="mb-3 sm:mb-4">
+              <h2 className="text-xs sm:text-sm font-bold text-gray-900 mb-1.5 sm:mb-2 pb-0.5 border-b-2 border-gray-200">
                 Work Experience
               </h2>
               {resumeData.workExperience.map((exp, index) => (
                 <div key={index} className="mb-4">
                   <div className="flex justify-between items-start mb-1">
                     <div>
-                      <h3 className="text-xs font-bold text-gray-900">{exp.company || 'Company Name'}</h3>
+                      <h3 className="text-xs mb-1 font-bold text-gray-900">{exp.company || 'Company Name'}</h3>
                       <p className="text-xs text-gray-700 font-medium">{exp.role || 'Job Title'}</p>
                     </div>
                     <p className="text-xs text-gray-600 italic whitespace-nowrap ml-2">
@@ -194,8 +194,8 @@ const LiveResumePreview = ({ resumeData }) => {
 
           {/* Projects */}
           {resumeData.projects && resumeData.projects.length > 0 && (
-            <div className="mb-6">
-              <h2 className="text-sm font-bold text-gray-900 mb-3 pb-1 border-b-2 border-gray-200">
+            <div className="mb-3 sm:mb-4">
+              <h2 className="text-xs sm:text-sm font-bold text-gray-900 mb-1.5 sm:mb-2 pb-0.5 border-b-2 border-gray-200">
                 Projects
               </h2>
               {resumeData.projects.map((project, index) => (
@@ -233,11 +233,11 @@ const LiveResumePreview = ({ resumeData }) => {
 
           {/* Skills */}
           {resumeData.skills && resumeData.skills.length > 0 && (
-            <div className="mb-6">
-              <h2 className="text-sm font-bold text-gray-900 mb-3 pb-1 border-b-2 border-gray-200">
+            <div className="mb-3 sm:mb-4">
+              <h2 className="text-xs sm:text-sm font-bold text-gray-900 mb-1.5 sm:mb-2 pb-0.5 border-b-2 border-gray-200">
                 Skills
               </h2>
-              <div className="grid grid-cols-2 gap-x-6 gap-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 sm:gap-x-4 gap-y-1.5 sm:gap-y-2">
                 {resumeData.skills.map((skill, index) => (
                   <div key={index}>
                     <div className="flex justify-between items-center mb-1">
@@ -261,11 +261,11 @@ const LiveResumePreview = ({ resumeData }) => {
 
           {/* Certifications */}
           {resumeData.certificates && resumeData.certificates.length > 0 && (
-            <div className="mb-6">
-              <h2 className="text-sm font-bold text-gray-900 mb-3 pb-1 border-b-2 border-gray-200">
+            <div className="mb-3 sm:mb-4">
+              <h2 className="text-xs sm:text-sm font-bold text-gray-900 mb-1.5 sm:mb-2 pb-0.5 border-b-2 border-gray-200">
                 Certifications
               </h2>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
                 {resumeData.certificates.map((cert, index) => (
                   <div key={index} className="flex items-start gap-2">
                     <div className="bg-purple-100 text-purple-700 px-2 py-1 rounded text-xs font-bold">
