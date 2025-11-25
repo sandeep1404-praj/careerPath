@@ -4,6 +4,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { resumeAPI, getInitialResumeData } from '@/api/resumeApi';
 import ResumeForm from '@/components/Resume/ResumeForm';
 import LiveResumePreview from '@/components/Resume/LiveResumePreview';
+import ThemeSelector from '@/components/Resume/ThemeSelector';
+import ColorPaletteSelector from '@/components/Resume/ColorPaletteSelector';
+import { getColorPalette } from '@/config/resumeThemes';
 import { toast } from '@/utils/toast';
 
 const ResumeEditor = () => {
@@ -14,6 +17,7 @@ const ResumeEditor = () => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('form'); // 'form' or 'preview'
+  const [showThemeModal, setShowThemeModal] = useState(false);
   const isEditMode = !!id;
   const previewRef = useRef(null);
 
@@ -127,6 +131,30 @@ const ResumeEditor = () => {
     }
   };
 
+  // Handle theme selection
+  const handleThemeSelect = (themeId) => {
+    setResumeData((prev) => ({
+      ...prev,
+      template: {
+        ...prev.template,
+        theme: themeId,
+      },
+    }));
+  };
+
+  // Handle color palette selection
+  const handlePaletteSelect = (paletteId) => {
+    const palette = getColorPalette(paletteId);
+    setResumeData((prev) => ({
+      ...prev,
+      template: {
+        ...prev.template,
+        colorPalette: paletteId,
+        colors: palette.colors, // Store the actual colors array for backend
+      },
+    }));
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -162,6 +190,16 @@ const ResumeEditor = () => {
                 className="flex-1 sm:flex-none px-3 sm:px-5 py-2 sm:py-2.5 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 text-xs sm:text-sm font-medium shadow-sm hover:shadow"
               >
                 Cancel
+              </button>
+              <button
+                onClick={() => setShowThemeModal(true)}
+                className="flex-1 sm:flex-none px-3 sm:px-5 py-2 sm:py-2.5 border-2 border-purple-300 text-purple-700 bg-purple-50 rounded-xl hover:bg-purple-100 hover:border-purple-400 transition-all duration-200 text-xs sm:text-sm font-medium shadow-sm hover:shadow flex items-center justify-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                </svg>
+                <span className="hidden sm:inline">Change Theme</span>
+                <span className="sm:hidden">Theme</span>
               </button>
               <button
                 onClick={handleSave}
@@ -241,6 +279,85 @@ const ResumeEditor = () => {
           </div>
         </div>
       </div>
+
+      {/* Theme Customization Modal */}
+      {showThemeModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-7xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            {/* Modal Header */}
+            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between bg-gradient-to-r from-blue-50 to-purple-50">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center shadow-md">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                  </svg>
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">Customize Resume Theme</h2>
+                  <p className="text-sm text-gray-600">Choose your template and color palette</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowThemeModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="flex-1 overflow-y-auto p-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Left Side - Selectors */}
+                <div className="space-y-6">
+                  <ThemeSelector
+                    selectedTheme={resumeData.template?.theme || 'modern'}
+                    onThemeSelect={handleThemeSelect}
+                  />
+                  
+                  <ColorPaletteSelector
+                    selectedPalette={resumeData.template?.colorPalette || 'purple'}
+                    onPaletteSelect={handlePaletteSelect}
+                  />
+                </div>
+
+                {/* Right Side - Live Preview */}
+                <div className="lg:sticky lg:top-0">
+                  <div className="bg-gradient-to-br from-gray-100 via-gray-50 to-blue-50 p-4 rounded-xl">
+                    <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                      Live Preview
+                    </h3>
+                    <div className="bg-white rounded-lg shadow-xl overflow-hidden border border-gray-200" style={{ height: '500px' }}>
+                      <div className="h-full overflow-auto">
+                        <LiveResumePreview resumeData={resumeData} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between bg-gray-50">
+              <p className="text-sm text-gray-600">
+                Changes will be applied instantly to your resume
+              </p>
+              <button
+                onClick={() => setShowThemeModal(false)}
+                className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -575,7 +575,7 @@ const ResumeForm = ({ resumeData, setResumeData }) => {
       </ResumeSection>
 
       {/* Interests */}
-      <ResumeSection title="Interests" icon="🎯">
+      <ResumeSection title="Interests" >
         <div className="flex flex-wrap gap-2 mb-4">
           {resumeData.interests.map((interest, index) => (
             <div
@@ -599,7 +599,7 @@ const ResumeForm = ({ resumeData, setResumeData }) => {
             value={interestText}
             onChange={(e) => setInterestText(e.target.value)}
             placeholder="Add an interest (e.g., Photography, Reading)"
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg bg-white text-black focus:ring-2 focus:ring-purple-500"
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
                 e.preventDefault();

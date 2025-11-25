@@ -421,17 +421,7 @@ function RoadmapPage() {
           )}
         </div>
 
-        {/* Footer info */}
-        <div className="mt-16 text-center text-gray-500">
-          <p className="mb-2">
-            💡 <strong>Tip:</strong> Click on a roadmap to explore its tasks and add them to your personal roadmap
-          </p>
-          {user && (
-            <p>
-              🎯 Track your progress and customize your learning journey with your personal roadmap above
-            </p>
-          )}
-        </div>
+        
       </div>
     </div>
   );

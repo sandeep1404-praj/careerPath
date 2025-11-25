@@ -12,7 +12,8 @@ const resumeSchema = new mongoose.Schema(
 
     template: {
       theme: { type: String },
-      colorPalette: { type: [String] },
+      colorPalette: { type: String }, // Store palette ID like 'purple', 'blue', etc.
+      colors: { type: [String] }, // Store the actual color values ['#7C3AED', '#5B21B6', '#A78BFA']
     },
 
     profileInfo: {

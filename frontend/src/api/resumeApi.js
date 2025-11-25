@@ -115,7 +115,8 @@ export const getInitialResumeData = () => ({
   thumbnail: '',
   template: {
     theme: 'modern',
-    colorPalette: ['#3B82F6', '#1E40AF', '#60A5FA'],
+    colorPalette: 'purple',
+    colors: ['#7C3AED', '#5B21B6', '#A78BFA'], // Default purple palette colors
   },
   profileInfo: {
     photo: '',
