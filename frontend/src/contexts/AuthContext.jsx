@@ -20,23 +20,28 @@ export const AuthProvider = ({ children }) => {
   // Check if user is authenticated on app load
   useEffect(() => {
     const checkAuth = async () => {
-      if (token) {
+      const storedToken = localStorage.getItem('token');
+      if (storedToken) {
         try {
-          const response = await authAPI.getProfile(token);
+          const response = await authAPI.getProfile();
           setUser(response.user);
         } catch (error) {
           console.error('Auth check failed:', error);
           // Only logout if it's an authentication error, not a connection error
           if (error.message.includes('401') || error.message.includes('403')) {
-            logout();
+            localStorage.removeItem('token');
+            setToken(null);
+            setUser(null);
           }
         }
       }
       setLoading(false);
     };
 
-    checkAuth();
-  }, [token]);
+    // Delay auth check to not block initial render
+    const timer = setTimeout(checkAuth, 100);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Send OTP for login
   const sendOtp = async (email, password) => {

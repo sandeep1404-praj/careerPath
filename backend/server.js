@@ -2,6 +2,8 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
+import compression from 'compression';
+import helmet from 'helmet';
 
 import connectDB from './config/db.js';
 import authRoutes from './routes/auth.js';
@@ -14,6 +16,16 @@ dotenv.config();
 const app = express();
 
 import { startTaskEmailScheduler } from './utils/taskEmailScheduler.js';
+
+// Security headers with helmet
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  contentSecurityPolicy: false, // Disable CSP for now, configure later
+}));
+
+// Enable gzip compression
+app.use(compression());
+
 // CORS configuration
 app.use(cors({
   origin: [process.env.FRONTEND_URL , 'http://localhost:5173'],

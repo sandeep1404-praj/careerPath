@@ -1,107 +1,212 @@
+import { lazy, Suspense } from "react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "react-hot-toast";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { RoadmapProvider } from "./contexts/RoadmapContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import Index from "./pages/Index";
-import Login from "./pages/Login";
-import Signup from "./pages/Signup";
-import VerifyEmail from "./pages/VerifyEmail";
-import Dashboard from "./pages/Dashboard";
-import SettingsPage from './pages/SettingsPage'; // Import SettingsPage
-import NotFound from "./pages/NotFound";
-import ForgotPassword from "./pages/ForgotPassword";
-import BlogSection from "@/components/BlogSection";
-import AboutSection from "@/components/AboutSection";
 
-import ResetPassword from "./pages/ResetPassword";
-
-// optional layout wrapper
-import {AppLayout} from "./components/Layout/AppLayout";  
-import RoadmapPage from "./components/RoadmapPage";
-import ProfileRoadmapPage from "./pages/ProfilePage";
-
-// Resume pages
-import ResumeDashboard from "./pages/Resume/ResumeDashboard";
-import ResumeEditor from "./pages/Resume/ResumeEditor";
-import ResumePreview from "./pages/Resume/ResumePreview";
+// Eagerly load critical components
+import { AppLayout } from "./components/Layout/AppLayout";
 import PageTransition from "./components/PageTransition";
 
-const queryClient = new QueryClient();
+// Lazy load all route components
+const Index = lazy(() => import("./pages/Index"));
+const Login = lazy(() => import("./pages/Login"));
+const Signup = lazy(() => import("./pages/Signup"));
+const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const SettingsPage = lazy(() => import("./pages/SettingsPage"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const BlogSection = lazy(() => import("@/components/BlogSection"));
+const AboutSection = lazy(() => import("@/components/AboutSection"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const RoadmapPage = lazy(() => import("./components/RoadmapPage"));
+const ProfileRoadmapPage = lazy(() => import("./pages/ProfilePage"));
+const ResumeDashboard = lazy(() => import("./pages/Resume/ResumeDashboard"));
+const ResumeEditor = lazy(() => import("./pages/Resume/ResumeEditor"));
+const ResumePreview = lazy(() => import("./pages/Resume/ResumePreview"));
+
+// Loading fallback component
+const LoadingFallback = () => (
+  <div className="min-h-screen flex items-center justify-center bg-gray-900">
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+  </div>
+);
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      cacheTime: 10 * 60 * 1000, // 10 minutes
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
 const App = () => {
   const router = createBrowserRouter([
     {
       path: "/",
-      element: <AppLayout />, // top-level layout
-      errorElement: <NotFound />,
+      element: <AppLayout />,
+      errorElement: (
+        <Suspense fallback={<LoadingFallback />}>
+          <NotFound />
+        </Suspense>
+      ),
       children: [
-        { path: "/", 
-          element: 
-          (
-            <PageTransition>
-              <Index />
-            </PageTransition>
-          ) },
-        { path: "/about", element: <AboutSection /> },
-        { path: "/blogs", element: <BlogSection /> },
-        { path: "/login", element: <Login /> },
-        { path: "/signup", element: <Signup /> },
-        { path: "/verify-email", element: <VerifyEmail /> },
-        {path:"/roadmap/:id", element:<RoadmapPage />},
-        {path:"/roadmaps", element:<RoadmapPage />},
+        { 
+          path: "/", 
+          element: (
+            <Suspense fallback={<LoadingFallback />}>
+              <PageTransition>
+                <Index />
+              </PageTransition>
+            </Suspense>
+          ) 
+        },
+        { 
+          path: "/about", 
+          element: (
+            <Suspense fallback={<LoadingFallback />}>
+              <AboutSection />
+            </Suspense>
+          ) 
+        },
+        { 
+          path: "/blogs", 
+          element: (
+            <Suspense fallback={<LoadingFallback />}>
+              <BlogSection />
+            </Suspense>
+          ) 
+        },
+        { 
+          path: "/login", 
+          element: (
+            <Suspense fallback={<LoadingFallback />}>
+              <Login />
+            </Suspense>
+          ) 
+        },
+        { 
+          path: "/signup", 
+          element: (
+            <Suspense fallback={<LoadingFallback />}>
+              <Signup />
+            </Suspense>
+          ) 
+        },
+        { 
+          path: "/verify-email", 
+          element: (
+            <Suspense fallback={<LoadingFallback />}>
+              <VerifyEmail />
+            </Suspense>
+          ) 
+        },
         {
-          path:"/profile",
-          element:(
-          <ProtectedRoute>
-            <ProfileRoadmapPage />
-          </ProtectedRoute>
+          path: "/roadmap/:id", 
+          element: (
+            <Suspense fallback={<LoadingFallback />}>
+              <RoadmapPage />
+            </Suspense>
+          )
+        },
+        {
+          path: "/roadmaps", 
+          element: (
+            <Suspense fallback={<LoadingFallback />}>
+              <RoadmapPage />
+            </Suspense>
+          )
+        },
+        {
+          path: "/profile",
+          element: (
+            <Suspense fallback={<LoadingFallback />}>
+              <ProtectedRoute>
+                <ProfileRoadmapPage />
+              </ProtectedRoute>
+            </Suspense>
           )
         },
         {
           path: "/dashboard",
           element: (
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
+            <Suspense fallback={<LoadingFallback />}>
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            </Suspense>
           ),
         },
         {
           path: "/resumes",
           element: (
-            <ProtectedRoute>
-              <ResumeDashboard />
-            </ProtectedRoute>
+            <Suspense fallback={<LoadingFallback />}>
+              <ProtectedRoute>
+                <ResumeDashboard />
+              </ProtectedRoute>
+            </Suspense>
           ),
         },
         {
           path: "/resumes/new",
           element: (
-            <ProtectedRoute>
-              <ResumeEditor />
-            </ProtectedRoute>
+            <Suspense fallback={<LoadingFallback />}>
+              <ProtectedRoute>
+                <ResumeEditor />
+              </ProtectedRoute>
+            </Suspense>
           ),
         },
         {
           path: "/resumes/edit/:id",
           element: (
-            <ProtectedRoute>
-              <ResumeEditor />
-            </ProtectedRoute>
+            <Suspense fallback={<LoadingFallback />}>
+              <ProtectedRoute>
+                <ResumeEditor />
+              </ProtectedRoute>
+            </Suspense>
           ),
         },
         {
           path: "/resumes/preview/:id",
           element: (
-            <ProtectedRoute>
-              <ResumePreview />
-            </ProtectedRoute>
+            <Suspense fallback={<LoadingFallback />}>
+              <ProtectedRoute>
+                <ResumePreview />
+              </ProtectedRoute>
+            </Suspense>
           ),
         },
-        { path: "/settings", element: <SettingsPage /> }, // Add SettingsPage route
-        { path: "/forgot-password", element: <ForgotPassword /> },
-        { path: "/reset-password", element: <ResetPassword /> },
+        { 
+          path: "/settings", 
+          element: (
+            <Suspense fallback={<LoadingFallback />}>
+              <SettingsPage />
+            </Suspense>
+          ) 
+        },
+        { 
+          path: "/forgot-password", 
+          element: (
+            <Suspense fallback={<LoadingFallback />}>
+              <ForgotPassword />
+            </Suspense>
+          ) 
+        },
+        { 
+          path: "/reset-password", 
+          element: (
+            <Suspense fallback={<LoadingFallback />}>
+              <ResetPassword />
+            </Suspense>
+          ) 
+        },
       ],
     },
   ]);

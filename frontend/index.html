@@ -2,12 +2,41 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/svg+xml" href="/logo.jpg" />
-    <title>CareerCompass</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0" />
+    <meta name="description" content="CareerCompass - Your personalized career roadmap builder. Plan your learning journey, track progress, and build professional resumes." />
+    <meta name="keywords" content="career roadmap, learning path, resume builder, professional development" />
+    <meta name="theme-color" content="#1F2937" />
+    <meta name="author" content="CareerCompass" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="CareerCompass - Career Roadmap Builder" />
+    <meta property="og:description" content="Plan your career journey with personalized roadmaps and professional resume builder" />
+    <meta property="og:image" content="/logo.jpg" />
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="CareerCompass - Career Roadmap Builder" />
+    <meta name="twitter:description" content="Plan your career journey with personalized roadmaps" />
+    
+    <link rel="icon" type="image/jpeg" href="/logo.jpg" />
+    <link rel="canonical" href="https://yourdomai.com" />
+    <link rel="manifest" href="/manifest.json" />
+    
+    <title>CareerCompass - Career Roadmap & Resume Builder</title>
+    
+    <!-- Preconnect to external domains -->
+    <link rel="preconnect" href="http://localhost:5000" crossorigin />
+    
+    <!-- Inline critical CSS for FCP -->
+    <style>
+      #root { min-height: 100vh; }
+      body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+    </style>
   </head>
 
   <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
