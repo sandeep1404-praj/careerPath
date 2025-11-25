@@ -154,8 +154,8 @@ export const authAPI = {
 // Roadmap API functions
 export const roadmapAPI = {
   // Get all static roadmaps
-  getStaticRoadmaps: async () => {
-    return apiRequest('/roadmaps/static', {
+  getStaticRoadmaps: async (page = 1, limit = 10) => {
+    return apiRequest(`/roadmaps/static?page=${page}&limit=${limit}`, {
       method: 'GET',
     });
   },

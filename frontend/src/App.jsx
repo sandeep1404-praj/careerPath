@@ -26,6 +26,7 @@ import ProfileRoadmapPage from "./pages/ProfilePage";
 import ResumeDashboard from "./pages/Resume/ResumeDashboard";
 import ResumeEditor from "./pages/Resume/ResumeEditor";
 import ResumePreview from "./pages/Resume/ResumePreview";
+import PageTransition from "./components/PageTransition";
 
 const queryClient = new QueryClient();
 
@@ -36,7 +37,13 @@ const App = () => {
       element: <AppLayout />, // top-level layout
       errorElement: <NotFound />,
       children: [
-        { path: "/", element: <Index /> },
+        { path: "/", 
+          element: 
+          (
+            <PageTransition>
+              <Index />
+            </PageTransition>
+          ) },
         { path: "/about", element: <AboutSection /> },
         { path: "/blogs", element: <BlogSection /> },
         { path: "/login", element: <Login /> },

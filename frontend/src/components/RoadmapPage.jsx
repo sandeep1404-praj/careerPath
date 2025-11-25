@@ -18,6 +18,7 @@ function RoadmapPage() {
     loading,
     error,
     staticRoadmaps,
+    pagination,
     loadStaticRoadmaps,
     addRoadmapToUser,
     addTaskToUser,
@@ -31,12 +32,20 @@ function RoadmapPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [isAddingRoadmap, setIsAddingRoadmap] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
+  // Load roadmaps on component mount only once
   useEffect(() => {
-    if (staticRoadmaps.length === 0 && !loading) {
-      loadStaticRoadmaps();
-    }
-  }, [staticRoadmaps.length, loading, loadStaticRoadmaps]);
+    loadStaticRoadmaps(1, 10);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Handle page changes
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+    loadStaticRoadmaps(newPage, 10);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const detailRoadmap = detailId
     ? staticRoadmaps.find(r => String(r.id) === detailId || String(r._id) === detailId)
@@ -107,7 +116,7 @@ function RoadmapPage() {
             <h2 className="text-xl font-bold text-white mb-2">Error Loading Roadmaps</h2>
             <p className="text-gray-400 mb-4">{error}</p>
             <button
-              onClick={loadStaticRoadmaps}
+              onClick={() => loadStaticRoadmaps(currentPage, 10)}
               className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
             >
               Try Again
@@ -391,14 +400,53 @@ function RoadmapPage() {
           </div>
 
           {filteredRoadmaps.length > 0 ? (
-            <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
-              {filteredRoadmaps.map((roadmap) => (
-                <StaticRoadmapCard
-                  key={roadmap.id}
-                  roadmap={roadmap}
-                />
-              ))}
-            </div>
+            <>
+              <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
+                {filteredRoadmaps.map((roadmap) => (
+                  <StaticRoadmapCard
+                    key={roadmap.id}
+                    roadmap={roadmap}
+                  />
+                ))}
+              </div>
+
+              {/* Pagination Controls */}
+              {pagination && pagination.totalPages > 1 && (
+                <div className="mt-8 flex items-center justify-center gap-4">
+                  <button
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={!pagination.hasPrevPage}
+                    className="px-4 py-2 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center gap-2"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                    Previous
+                  </button>
+
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-400">
+                      Page <span className="text-white font-semibold">{pagination.currentPage}</span> of{' '}
+                      <span className="text-white font-semibold">{pagination.totalPages}</span>
+                    </span>
+                    <span className="text-gray-500 text-sm">
+                      ({pagination.totalCount} total)
+                    </span>
+                  </div>
+
+                  <button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={!pagination.hasNextPage}
+                    className="px-4 py-2 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center gap-2"
+                  >
+                    Next
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </div>
+              )}
+            </>
           ) : (
             <div className="text-center py-12">
               <div className="text-6xl mb-4">🔍</div>

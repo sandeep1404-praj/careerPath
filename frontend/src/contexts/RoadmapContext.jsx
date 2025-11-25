@@ -11,6 +11,7 @@ const ROADMAP_ACTIONS = {
   SET_LOADING: 'SET_LOADING',
   SET_ERROR: 'SET_ERROR',
   SET_STATIC_ROADMAPS: 'SET_STATIC_ROADMAPS',
+  SET_PAGINATION: 'SET_PAGINATION',
   SET_USER_ROADMAP: 'SET_USER_ROADMAP',
   ADD_TASK_TO_USER: 'ADD_TASK_TO_USER',
   UPDATE_TASK: 'UPDATE_TASK',
@@ -25,6 +26,14 @@ const initialState = {
   loading: false,
   error: null,
   staticRoadmaps: [],
+  pagination: {
+    currentPage: 1,
+    totalPages: 0,
+    totalCount: 0,
+    limit: 10,
+    hasNextPage: false,
+    hasPrevPage: false
+  },
   userRoadmap: null,
   preferences: {
     defaultTrack: '',
@@ -44,6 +53,9 @@ const roadmapReducer = (state, action) => {
 
     case ROADMAP_ACTIONS.SET_STATIC_ROADMAPS:
       return { ...state, staticRoadmaps: action.payload, loading: false };
+
+    case ROADMAP_ACTIONS.SET_PAGINATION:
+      return { ...state, pagination: action.payload };
 
     case ROADMAP_ACTIONS.SET_USER_ROADMAP:
       return {
@@ -143,11 +155,12 @@ export const RoadmapProvider = ({ children }) => {
   }, [dispatch]);
 
   // Load static roadmaps
-  const loadStaticRoadmaps = useCallback(async () => {
+  const loadStaticRoadmaps = useCallback(async (page = 1, limit = 10) => {
     try {
       dispatch({ type: ROADMAP_ACTIONS.SET_LOADING, payload: true });
-      const data = await roadmapAPI.getStaticRoadmaps();
-      dispatch({ type: ROADMAP_ACTIONS.SET_STATIC_ROADMAPS, payload: data });
+      const data = await roadmapAPI.getStaticRoadmaps(page, limit);
+      dispatch({ type: ROADMAP_ACTIONS.SET_STATIC_ROADMAPS, payload: data.roadmaps });
+      dispatch({ type: ROADMAP_ACTIONS.SET_PAGINATION, payload: data.pagination });
     } catch (error) {
       handleError(error, 'Failed to load roadmaps');
     }
@@ -165,11 +178,6 @@ export const RoadmapProvider = ({ children }) => {
       handleError(error, 'Failed to load your roadmap');
     }
   }, [dispatch, handleError, token]);
-
-  // Load static roadmaps on mount (available to everyone)
-  useEffect(() => {
-    loadStaticRoadmaps();
-  }, [loadStaticRoadmaps]);
 
   // Load user roadmap when user is authenticated
   useEffect(() => {

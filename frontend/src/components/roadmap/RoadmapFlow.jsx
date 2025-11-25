@@ -6,12 +6,15 @@ const RoadmapFlow = ({ tasks = [], roadmap }) => {
   const reactFlowInstance = useRef(null);
   const containerRef = useRef(null);
   const [containerWidth, setContainerWidth] = useState(800);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     const handleResize = () => {
       if (containerRef.current) {
         setContainerWidth(containerRef.current.offsetWidth);
       }
+      // Check if mobile (width < 768px)
+      setIsMobile(window.innerWidth < 768);
     };
     handleResize();
     window.addEventListener('resize', handleResize);
@@ -21,43 +24,48 @@ const RoadmapFlow = ({ tasks = [], roadmap }) => {
   const { nodes, edges } = useMemo(() => {
     if (!tasks.length) return { nodes: [], edges: [] };
 
-    const statusOrder = { 'not-started': 0, 'in-progress': 1, 'completed': 2 };
-    const grouped = tasks.reduce((acc, t) => {
-      const key = t.status || 'not-started';
-      acc[key] = acc[key] || [];
-      acc[key].push(t);
-      return acc;
-    }, {});
+    // Sort tasks by order
+    const sortedTasks = [...tasks].sort((a, b) => (a.order || 0) - (b.order || 0));
 
-    Object.values(grouped).forEach(arr => arr.sort((a,b) => (a.order||0)-(b.order||0)));
-
-    const totalColumns = Object.keys(statusOrder).length;
-    const columnSpacing = containerWidth / (totalColumns + 1); // responsive spacing
+    // Distribute tasks into 2 columns on mobile, 3 on desktop
+    const totalColumns = isMobile ? 2 : 3;
+    const tasksPerColumn = Math.ceil(sortedTasks.length / totalColumns);
+    const columnSpacing = containerWidth / (totalColumns + 1);
 
     const builtNodes = [];
     const builtEdges = [];
 
-    Object.keys(statusOrder).forEach(status => {
-      const colTasks = grouped[status] || [];
-      colTasks.forEach((task, idx) => {
-        const id = task.taskId || task.id || `${status}-${idx}`;
-        const nodeWidth = Math.min(180, containerWidth / (totalColumns + 1));
+    // Create columns
+    for (let col = 0; col < totalColumns; col++) {
+      const startIdx = col * tasksPerColumn;
+      const endIdx = Math.min(startIdx + tasksPerColumn, sortedTasks.length);
+      const columnTasks = sortedTasks.slice(startIdx, endIdx);
+
+      columnTasks.forEach((task, idx) => {
+        const id = task.taskId || task.id || `col${col}-${idx}`;
+        const nodeWidth = Math.min(200, containerWidth / (totalColumns + 1) - 20);
+        
+        // Color based on difficulty or category
+        const getNodeColor = () => {
+          if (task.difficulty === 'Advanced') return '#7C3AED';
+          if (task.difficulty === 'Intermediate') return '#2563EB';
+          return '#059669';
+        };
+
         builtNodes.push({
           id,
           position: {
-            x: columnSpacing * (statusOrder[status] + 0.5),
-            y: idx * 100,
+            x: columnSpacing * (col + 1) - nodeWidth / 2,
+            y: idx * 120 + 20,
           },
           data: { label: task.name },
           style: {
-            background: status === 'completed' ? '#047857' 
-                        : status === 'in-progress' ? '#B45309' 
-                        : '#1F2937',
+            background: getNodeColor(),
             color: '#f9fafb',
             border: '1px solid #4B5563',
-            fontSize: 12,
+            fontSize: 11,
             fontWeight: 500,
-            padding: 8,
+            padding: 10,
             width: nodeWidth,
             borderRadius: 8,
             boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
@@ -66,21 +74,35 @@ const RoadmapFlow = ({ tasks = [], roadmap }) => {
           }
         });
 
+        // Connect to previous task in same column
         if (idx > 0) {
-          const prev = colTasks[idx - 1];
+          const prevId = columnTasks[idx - 1].taskId || columnTasks[idx - 1].id || `col${col}-${idx-1}`;
           builtEdges.push({
-            id: `${id}-from-${prev.taskId || prev.id}`,
-            source: prev.taskId || prev.id || `${status}-${idx-1}`,
+            id: `${id}-from-${prevId}`,
+            source: prevId,
             target: id,
             animated: true,
             style: { stroke: '#6B7280', strokeWidth: 1.5 },
           });
         }
+
+        // Connect last task of previous column to first task of current column
+        if (col > 0 && idx === 0 && startIdx > 0) {
+          const prevColLastTask = sortedTasks[startIdx - 1];
+          const prevId = prevColLastTask.taskId || prevColLastTask.id || `col${col-1}-${tasksPerColumn-1}`;
+          builtEdges.push({
+            id: `${id}-from-${prevId}-cross`,
+            source: prevId,
+            target: id,
+            animated: true,
+            style: { stroke: '#9CA3AF', strokeWidth: 1, strokeDasharray: '5,5' },
+          });
+        }
       });
-    });
+    }
 
     return { nodes: builtNodes, edges: builtEdges };
-  }, [tasks, containerWidth]);
+  }, [tasks, containerWidth, isMobile]);
 
   return (
     <div
@@ -91,10 +113,12 @@ const RoadmapFlow = ({ tasks = [], roadmap }) => {
         nodes={nodes}
         edges={edges}
         fitView
-        fitViewOptions={{ padding: 0.1 }}
+        fitViewOptions={{ padding: 0.2, minZoom: 0.5, maxZoom: 1.5 }}
         onInit={(instance) => {
           reactFlowInstance.current = instance;
-          instance.fitView({ padding: 0.1 });
+          setTimeout(() => {
+            instance.fitView({ padding: 0.2, minZoom: 0.5, maxZoom: 1.5 });
+          }, 100);
         }}
         style={{ background: '#111827', borderRadius: '12px' }}
       >

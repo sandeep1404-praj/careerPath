@@ -16,10 +16,34 @@ export const getStaticRoadmaps = async (req, res) => {
       });
     }
 
-    const roadmaps = await StaticRoadmap.find().sort({ track: 1 });
-    console.log(`✅ Found ${roadmaps.length} static roadmaps`);
+    // Get pagination parameters from query
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    // Get total count for pagination metadata
+    const totalCount = await StaticRoadmap.countDocuments();
+    const totalPages = Math.ceil(totalCount / limit);
+
+    // Fetch roadmaps with pagination
+    const roadmaps = await StaticRoadmap.find()
+      .sort({ track: 1 })
+      .skip(skip)
+      .limit(limit);
+
+    console.log(`✅ Found ${roadmaps.length} static roadmaps (page ${page} of ${totalPages})`);
     
-    res.json(roadmaps);
+    res.json({
+      roadmaps,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalCount,
+        limit,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1
+      }
+    });
   } catch (error) {
   console.error('❌ Error fetching static roadmaps:', error.message);
     res.status(500).json({ 
