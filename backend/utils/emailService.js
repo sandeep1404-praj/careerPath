@@ -1,12 +1,49 @@
 import nodemailer from 'nodemailer';
 
-// Create transporter
+// Email queue for async/non-blocking sends
+const emailQueue = [];
+let isProcessing = false;
+
+// Process email queue with timeout protection
+const processEmailQueue = async () => {
+  if (isProcessing || emailQueue.length === 0) return;
+  
+  isProcessing = true;
+  while (emailQueue.length > 0) {
+    const emailTask = emailQueue.shift();
+    try {
+      // Timeout protection: 5 seconds max per email
+      await Promise.race([
+        emailTask(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Email timeout')), 5000))
+      ]);
+    } catch (err) {
+      // Silent fail for queue
+    }
+  }
+  isProcessing = false;
+};
+
+// Queue email for async sending (fire-and-forget)
+const queueEmail = (emailFunction) => {
+  emailQueue.push(emailFunction);
+  // Process queue after small delay to batch if multiple emails
+  setTimeout(processEmailQueue, 100);
+};
+
+// Create transporter with connection pooling
 const createTransporter = () => {
-  return nodemailer.createTransport({
-    service: 'gmail', // or your SMTP provider
+  return nodemailer.createTransporter({
+    service: 'gmail',
+    pool: true, // Use connection pooling
+    maxConnections: 3,
+    maxMessages: 10,
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASSWORD
+    },
+    tls: {
+      rejectUnauthorized: false
     }
   });
 };
@@ -56,15 +93,13 @@ export const sendOtpEmail = async (email, otp) => {
 };
 
 
-export async function sendTaskMotivationEmail({ to, task }) {
-  try {
-    if (!to) {
-      return;
-    }
-    if (!task) {
-      return;
-    }
+export function sendTaskMotivationEmail({ to, task }) {
+  // Fire-and-forget: queue email, don't wait
+  if (!to || !task || !process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+    return Promise.resolve();
+  }
 
+  queueEmail(async () => {
     const randomLine = motivationalLines[Math.floor(Math.random() * motivationalLines.length)];
     const transporter = createTransporter();
 
@@ -94,53 +129,60 @@ export async function sendTaskMotivationEmail({ to, task }) {
     };
 
     await transporter.sendMail(mailOptions);
-  } catch (err) {
-  }
+  });
+  
+  return Promise.resolve();
 }
 
 // Send a motivational email summarizing a roadmap and its tasks
-export async function sendRoadmapMotivationEmail({ to, roadmapName, tasks = [] }) {
-  const randomLine = motivationalLines[Math.floor(Math.random() * motivationalLines.length)];
-  const transporter = createTransporter();
-
-  const tasksHtml = tasks.map(t => {
-    const title = t.name || t.title || 'Untitled Task';
-    const desc = t.description || '';
-    const est = t.estimatedTime || '';
-    return `
-      <li style="margin-bottom:8px;">
-        <strong>${title}</strong>
-        ${desc ? `<div style="color:#555;margin-top:4px;">${desc}</div>` : ''}
-        ${est ? `<div style="color:#777;font-size:13px;margin-top:2px;">Estimated: ${est}</div>` : ''}
-      </li>
-    `;
-  }).join('');
-
-  const mailOptions = {
-    from: process.env.EMAIL_USER,
-    to,
-    subject: `New roadmap added: ${roadmapName}`,
-    html: `
-      <!DOCTYPE html>
-      <html>
-      <body style="font-family:'Segoe UI', sans-serif; background:#f4f6f8; padding:20px;">
-        <div style="max-width:600px; margin:auto; background:#fff; padding:30px; border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,0.08);">
-          <h2 style="color:#2c3e50;">📚 ${roadmapName} added to your collection</h2>
-          <p style="color:#555;">Here are the tasks that were added with this roadmap:</p>
-          <ul style="color:#333;">${tasksHtml}</ul>
-          <hr style="border:none; border-top:1px solid #eee; margin:20px 0;">
-          <p style="color:green; font-style:italic;">💡 ${randomLine}</p>
-          <p style="color:#888; font-size:14px;">CareerCompass Team</p>
-        </div>
-      </body>
-      </html>
-    `
-  };
-
-  try {
-    await transporter.sendMail(mailOptions);
-  } catch (err) {
+export function sendRoadmapMotivationEmail({ to, roadmapName, tasks = [] }) {
+  // Fire-and-forget: queue email, don't wait
+  if (!to || !roadmapName || !process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+    return Promise.resolve();
   }
+
+  queueEmail(async () => {
+    const randomLine = motivationalLines[Math.floor(Math.random() * motivationalLines.length)];
+    const transporter = createTransporter();
+
+    const tasksHtml = tasks.map(t => {
+      const title = t.name || t.title || 'Untitled Task';
+      const desc = t.description || '';
+      const est = t.estimatedTime || '';
+      return `
+        <li style="margin-bottom:8px;">
+          <strong>${title}</strong>
+          ${desc ? `<div style="color:#555;margin-top:4px;">${desc}</div>` : ''}
+          ${est ? `<div style="color:#777;font-size:13px;margin-top:2px;">Estimated: ${est}</div>` : ''}
+        </li>
+      `;
+    }).join('');
+
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to,
+      subject: `New roadmap added: ${roadmapName}`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <body style="font-family:'Segoe UI', sans-serif; background:#f4f6f8; padding:20px;">
+          <div style="max-width:600px; margin:auto; background:#fff; padding:30px; border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,0.08);">
+            <h2 style="color:#2c3e50;">📚 ${roadmapName} added to your collection</h2>
+            <p style="color:#555;">Here are the tasks that were added with this roadmap:</p>
+            <ul style="color:#333;">${tasksHtml}</ul>
+            <hr style="border:none; border-top:1px solid #eee; margin:20px 0;">
+            <p style="color:green; font-style:italic;">💡 ${randomLine}</p>
+            <p style="color:#888; font-size:14px;">CareerCompass Team</p>
+          </div>
+        </body>
+        </html>
+      `
+    };
+
+    await transporter.sendMail(mailOptions);
+  });
+  
+  return Promise.resolve();
 }
 
 // Send verification email (for backward compatibility)

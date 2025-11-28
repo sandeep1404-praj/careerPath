@@ -16,14 +16,14 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Trigger email manually
+// Trigger email manually (fire-and-forget)
 router.post('/:taskId/send-email', async (req, res) => {
   try {
     const task = await Roadmap.findById(req.params.taskId);
     if (!task) return res.status(404).json({ error: 'Task not found' });
     const user = await User.findById(task.userId);
     if (!user) return res.status(404).json({ error: 'User not found' });
-    await sendTaskMotivationEmail({ to: user.email, task });
+    sendTaskMotivationEmail({ to: user.email, task });
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: 'Server error' });

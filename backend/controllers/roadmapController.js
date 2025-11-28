@@ -143,13 +143,13 @@ export const addTaskToUserRoadmap = async (req, res) => {
     };
     userRoadmap.tasks.push(newTask);
   const savedRoadmap = await userRoadmap.save();
-    // Send motivational email when task is added
+    // Send motivational email when task is added (fire-and-forget)
     try {
       const User = (await import('../models/User.js')).default;
       const user = await User.findById(userId);
       if (user && user.notificationEnabled) {
         const { sendTaskMotivationEmail } = await import('../utils/emailService.js');
-        await sendTaskMotivationEmail({
+        sendTaskMotivationEmail({
           to: user.email,
           task: {
             title: newTask.name,
@@ -452,13 +452,13 @@ export const addRoadmapToUser = async (req, res) => {
 
     await userRoadmap.save();
 
-    // Send a single motivational email with roadmap name and all task names
+    // Send a single motivational email with roadmap name and all task names (fire-and-forget)
     try {
       const User = (await import('../models/User.js')).default;
       const user = await User.findById(userId);
       if (user && user.notificationEnabled) {
         const { sendRoadmapMotivationEmail } = await import('../utils/emailService.js');
-        await sendRoadmapMotivationEmail({
+        sendRoadmapMotivationEmail({
           to: user.email,
           roadmapName: roadmapName,
           tasks: tasksToAdd
