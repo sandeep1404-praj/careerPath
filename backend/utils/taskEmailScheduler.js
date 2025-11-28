@@ -4,10 +4,10 @@ import Roadmap from '../models/Roadmap.js';
 import { sendTaskMotivationEmail } from '../utils/emailService.js';
 
 // Configurable interval: default daily at 9am
-const EMAIL_USER = process.env.EMAIL_USER || '0 9 * * *';
+const CRON_SCHEDULE = process.env.TASK_EMAIL_CRON || '0 9 * * *';
 
 export function startTaskEmailScheduler() {
-  cron.schedule(EMAIL_USER, async () => {
+  cron.schedule(CRON_SCHEDULE, async () => {
     try {
       const users = await User.find({ notificationEnabled: true });
       for (const user of users) {
