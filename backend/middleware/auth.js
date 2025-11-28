@@ -1,6 +1,10 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 
+// Simple in-memory cache for user data (helps on free tier)
+const userCache = new Map();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
 // Middleware to verify JWT token
 export const authenticateToken = async (req, res, next) => {
   try {
@@ -12,10 +16,32 @@ export const authenticateToken = async (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id).select('-password');
+    
+    // Check cache first
+    const cacheKey = decoded.id;
+    const cached = userCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+      req.user = cached.user;
+      return next();
+    }
+
+    const user = await User.findById(decoded.id).select('-password').lean();
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Cache the user data
+    userCache.set(cacheKey, { user, timestamp: Date.now() });
+    
+    // Clean old cache entries periodically
+    if (userCache.size > 100) {
+      const now = Date.now();
+      for (const [key, value] of userCache.entries()) {
+        if (now - value.timestamp >= CACHE_TTL) {
+          userCache.delete(key);
+        }
+      }
     }
 
     req.user = user;

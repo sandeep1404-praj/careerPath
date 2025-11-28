@@ -4,12 +4,9 @@ import UserRoadmap from "../models/UserRoadmap.js";
 // Get all static roadmaps
 export const getStaticRoadmaps = async (req, res) => {
   try {
-  console.log('📊 Fetching static roadmaps...');
-    
     // Check if database is connected
     const mongoose = await import('mongoose');
     if (mongoose.default.connection.readyState !== 1) {
-      console.error('❌ Database not connected. ReadyState:', mongoose.default.connection.readyState);
       return res.status(500).json({ 
         message: 'Database connection error',
         readyState: mongoose.default.connection.readyState
@@ -25,14 +22,13 @@ export const getStaticRoadmaps = async (req, res) => {
     const totalCount = await StaticRoadmap.countDocuments();
     const totalPages = Math.ceil(totalCount / limit);
 
-    // Fetch roadmaps with pagination
+    // Fetch roadmaps with pagination using lean() for faster queries
     const roadmaps = await StaticRoadmap.find()
       .sort({ track: 1 })
       .skip(skip)
-      .limit(limit);
+      .limit(limit)
+      .lean();
 
-    console.log(`✅ Found ${roadmaps.length} static roadmaps (page ${page} of ${totalPages})`);
-    
     res.json({
       roadmaps,
       pagination: {
@@ -45,7 +41,6 @@ export const getStaticRoadmaps = async (req, res) => {
       }
     });
   } catch (error) {
-  console.error('❌ Error fetching static roadmaps:', error.message);
     res.status(500).json({ 
       message: 'Failed to fetch roadmaps', 
       error: error.message,
@@ -71,7 +66,6 @@ export const getStaticRoadmap = async (req, res) => {
     
     res.json(roadmap);
   } catch (error) {
-    console.error('Error fetching static roadmap:', error);
     res.status(500).json({ 
       message: 'Failed to fetch roadmap', 
       error: error.message 
@@ -99,7 +93,6 @@ export const getUserRoadmap = async (req, res) => {
     
     res.json(userRoadmap);
   } catch (error) {
-    console.error('Error fetching user roadmap:', error);
     res.status(500).json({ 
       message: 'Failed to fetch user roadmap', 
       error: error.message 
@@ -110,12 +103,9 @@ export const getUserRoadmap = async (req, res) => {
 // Add task to user's roadmap
 export const addTaskToUserRoadmap = async (req, res) => {
   try {
-  console.log('🚀 Adding task to user roadmap...');
-    
     const userId = req.user.id || req.user._id; // Handle both id and _id
     
     if (!userId) {
-      console.error('❌ No user ID found in request');
       return res.status(401).json({ message: 'User authentication failed' });
     }
     
@@ -133,28 +123,22 @@ export const addTaskToUserRoadmap = async (req, res) => {
     } = req.body;
 
     if (!taskId || !name) {
-      console.error('❌ Missing required fields:', { taskId, name });
       return res.status(400).json({ message: 'Task ID and name are required' });
     }
-
-  console.log(`📋 Looking for user roadmap for userId: ${userId}`);
     let userRoadmap = await UserRoadmap.findOne({ userId });
     
     if (!userRoadmap) {
-  console.log('📝 Creating new user roadmap');
       userRoadmap = new UserRoadmap({ 
         userId, 
         tasks: [],
         stats: { totalTasks: 0, completedTasks: 0, inProgressTasks: 0 }
       });
     } else {
-  console.log(`📋 Found existing roadmap with ${userRoadmap.tasks.length} tasks`);
     }
 
     // Check if task already exists in user's roadmap
     const existingTask = userRoadmap.tasks.find(task => task.taskId === taskId);
     if (existingTask) {
-    console.log(`⚠️ Task already exists: ${taskId}`);
       return res.status(400).json({ message: 'Task already added to your roadmap' });
     }
 
@@ -162,9 +146,6 @@ export const addTaskToUserRoadmap = async (req, res) => {
     const maxOrder = userRoadmap.tasks.length > 0 
       ? Math.max(...userRoadmap.tasks.map(task => task.order || 0))
       : 0;
-
-  console.log(`📊 Max order: ${maxOrder}`);
-
     // Create new task with proper validation
     const newTask = {
       taskId: String(taskId),
@@ -180,14 +161,8 @@ export const addTaskToUserRoadmap = async (req, res) => {
       order: maxOrder + 1,
       status: 'not-started'
     };
-
-  console.log(`✨ New task created: ${newTask.taskId}`);
-
     userRoadmap.tasks.push(newTask);
-  console.log('💾 Saving user roadmap');
   const savedRoadmap = await userRoadmap.save();
-  console.log('✅ Task added');
-
     // Send motivational email when task is added
     try {
       const User = (await import('../models/User.js')).default;
@@ -202,10 +177,8 @@ export const addTaskToUserRoadmap = async (req, res) => {
             estimatedTime: newTask.estimatedTime || '',
           }
         });
-  console.log(`📧 Motivational email queued/sent to ${user.email}`);
       }
     } catch (mailErr) {
-      console.error('❌ Error sending motivational email:', mailErr);
     }
 
     res.status(201).json({ 
@@ -214,8 +187,6 @@ export const addTaskToUserRoadmap = async (req, res) => {
       roadmap: savedRoadmap 
     });
   } catch (error) {
-  console.error('❌ Error adding task to user roadmap:', error.message);
-    
     // Handle validation errors specifically
     if (error.name === 'ValidationError') {
   const validationErrors = Object.values(error.errors).map(err => err.message);
@@ -309,7 +280,6 @@ export const updateUserRoadmap = async (req, res) => {
       roadmap: userRoadmap 
     });
   } catch (error) {
-    console.error('Error updating user roadmap:', error);
     res.status(500).json({ 
       message: 'Failed to update roadmap', 
       error: error.message 
@@ -327,7 +297,6 @@ export const updateUserPreferences = async (req, res) => {
       try {
         payload = JSON.parse(payload);
       } catch (parseError) {
-        console.warn('Received string payload that is not valid JSON:', parseError.message);
         return res.status(400).json({ message: 'Invalid JSON payload' });
       }
     }
@@ -397,7 +366,6 @@ export const updateUserPreferences = async (req, res) => {
       preferences: userRoadmap.preferences 
     });
   } catch (error) {
-    console.error('Error updating user preferences:', error);
     res.status(500).json({ 
       message: 'Failed to update preferences', 
       error: error.message 
@@ -408,28 +376,14 @@ export const updateUserPreferences = async (req, res) => {
 // Add entire roadmap to user's roadmap
 export const addRoadmapToUser = async (req, res) => {
   try {
-  console.log('🚀 Adding entire roadmap to user');
-    
     const userId = req.user.id || req.user._id;
     
     if (!userId) {
-      console.error('❌ No user ID found in request');
       return res.status(401).json({ message: 'User authentication failed' });
     }
     
     const { roadmapId, roadmapName, roadmapTrack, tasks = [] } = req.body;
-
-    console.log(`🔍 Extracted fields: roadmapId=${!!roadmapId}, roadmapName=${!!roadmapName}, tasksCount=${tasks.length}`);
-
     if (!roadmapId || !roadmapName || !tasks.length) {
-      console.error('❌ Missing required fields:', { 
-        roadmapId: roadmapId, 
-        roadmapName: roadmapName, 
-        tasksCount: tasks.length,
-        hasRoadmapId: !!roadmapId,
-        hasRoadmapName: !!roadmapName,
-        hasTasks: tasks.length > 0
-      });
       return res.status(400).json({ 
         message: 'Roadmap ID, name, and tasks are required',
         received: {
@@ -439,12 +393,9 @@ export const addRoadmapToUser = async (req, res) => {
         }
       });
     }
-
-    console.log('📋 Looking for existing user roadmap for userId:', userId);
     let userRoadmap = await UserRoadmap.findOne({ userId });
     
     if (!userRoadmap) {
-  console.log('📝 Creating new user roadmap');
       userRoadmap = new UserRoadmap({ 
         userId, 
         tasks: [],
@@ -456,7 +407,6 @@ export const addRoadmapToUser = async (req, res) => {
     // Check if roadmap already exists in user's roadmap
     const existingRoadmap = userRoadmap.roadmaps?.find(rm => rm.roadmapId === roadmapId);
     if (existingRoadmap) {
-  console.log(`⚠️ Roadmap already exists: ${roadmapId}`);
       return res.status(400).json({ message: 'Roadmap already added to your collection' });
     }
 
@@ -472,7 +422,6 @@ export const addRoadmapToUser = async (req, res) => {
       // Check if task already exists
       const existingTask = userRoadmap.tasks.find(t => t.taskId === taskId);
       if (existingTask) {
-  console.log(`⚠️ Skipping existing task: ${taskId}`);
         return null;
       }
 
@@ -536,10 +485,7 @@ export const addRoadmapToUser = async (req, res) => {
         });
       }
     } catch (mailErr) {
-      console.error('❌ Error sending roadmap tasks email:', mailErr);
     }
-
-  console.log(`✅ Added roadmap "${roadmapName}" with ${tasksToAdd.length} tasks`);
     res.json({ 
       message: `Roadmap "${roadmapName}" added successfully`,
       roadmap: roadmapInfo,
@@ -547,7 +493,6 @@ export const addRoadmapToUser = async (req, res) => {
       totalTasks: userRoadmap.tasks.length
     });
   } catch (error) {
-    console.error('Error adding roadmap to user:', error);
     res.status(500).json({ 
       message: 'Failed to add roadmap', 
       error: error.message 
@@ -558,39 +503,29 @@ export const addRoadmapToUser = async (req, res) => {
 // Delete entire roadmap from user's collection
 export const deleteRoadmapFromUser = async (req, res) => {
   try {
-  console.log('🗑️ Deleting roadmap from user');
-    
     const userId = req.user.id || req.user._id;
     const { roadmapId } = req.params;
     
     if (!userId) {
-      console.error('❌ No user ID found in request');
       return res.status(401).json({ message: 'User authentication failed' });
     }
 
     if (!roadmapId) {
-      console.error('❌ No roadmap ID provided');
       return res.status(400).json({ message: 'Roadmap ID is required' });
     }
-
-  console.log('📋 Looking for user roadmap');
     const userRoadmap = await UserRoadmap.findOne({ userId });
     
     if (!userRoadmap) {
-  console.log('❌ User roadmap not found');
       return res.status(404).json({ message: 'User roadmap not found' });
     }
 
     // Find the roadmap to delete
     const roadmapIndex = userRoadmap.roadmaps?.findIndex(rm => rm.roadmapId === roadmapId);
     if (roadmapIndex === -1 || roadmapIndex === undefined) {
-  console.log(`❌ Roadmap not found in user collection: ${roadmapId}`);
       return res.status(404).json({ message: 'Roadmap not found in your collection' });
     }
 
     const roadmapToDelete = userRoadmap.roadmaps[roadmapIndex];
-  console.log(`🎯 Found roadmap to delete: ${roadmapToDelete.name}`);
-
     // Remove all tasks associated with this roadmap
     const tasksBeforeDelete = userRoadmap.tasks.length;
     userRoadmap.tasks = userRoadmap.tasks.filter(task => task.roadmapId !== roadmapId);
@@ -608,9 +543,6 @@ export const deleteRoadmapFromUser = async (req, res) => {
     };
 
     await userRoadmap.save();
-
-  console.log(`✅ Deleted roadmap "${roadmapToDelete.name}" with ${deletedTasksCount} tasks`);
-    
     res.json({ 
       message: `Roadmap "${roadmapToDelete.name}" deleted successfully`,
       deletedRoadmap: roadmapToDelete.name,
@@ -619,7 +551,6 @@ export const deleteRoadmapFromUser = async (req, res) => {
       remainingRoadmaps: userRoadmap.roadmaps.length
     });
   } catch (error) {
-    console.error('❌ Error deleting roadmap from user:', error);
     res.status(500).json({ 
       message: 'Failed to delete roadmap', 
       error: error.message 

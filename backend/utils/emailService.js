@@ -51,7 +51,6 @@ export const sendOtpEmail = async (email, otp) => {
     await transporter.sendMail(mailOptions);
     return true;
   } catch (error) {
-    console.error('Error sending OTP email:', error);
     return false;
   }
 };
@@ -60,11 +59,9 @@ export const sendOtpEmail = async (email, otp) => {
 export async function sendTaskMotivationEmail({ to, task }) {
   try {
     if (!to) {
-      console.error('sendTaskMotivationEmail: missing `to` address');
       return;
     }
     if (!task) {
-      console.error('sendTaskMotivationEmail: missing `task` object for email to', to);
       return;
     }
 
@@ -98,7 +95,6 @@ export async function sendTaskMotivationEmail({ to, task }) {
 
     await transporter.sendMail(mailOptions);
   } catch (err) {
-    console.error('Error sending motivational email:', err);
   }
 }
 
@@ -144,7 +140,6 @@ export async function sendRoadmapMotivationEmail({ to, roadmapName, tasks = [] }
   try {
     await transporter.sendMail(mailOptions);
   } catch (err) {
-    console.error('Error sending roadmap motivational email:', err);
   }
 }
 
@@ -179,10 +174,8 @@ export const sendVerificationEmail = async (email, token) => {
 
   try {
     await transporter.sendMail(mailOptions);
-    console.log('Verification email sent successfully to:', email);
     return true;
   } catch (error) {
-    console.error('Error sending verification email:', error);
     return false;
   }
 };
@@ -219,10 +212,8 @@ export const sendPasswordResetEmail = async (email, token) => {
 
   try {
     await transporter.sendMail(mailOptions);
-    console.log('Password reset email sent successfully to:', email);
     return true;
   } catch (error) {
-    console.error('Error sending password reset email:', error);
     return false;
   }
 };

@@ -43,9 +43,6 @@ router.post('/signup', async (req, res) => {
     let emailSent = true;
     if (process.env.EMAIL_USER && process.env.EMAIL_PASSWORD) {
       emailSent = await sendOtpEmail(email, otp);
-    } else {
-      console.log('ℹ️ Email not configured — displaying OTP for local testing');
-      console.log(`OTP: ${otp}`);
     }
 
     if (!emailSent && process.env.EMAIL_USER) {
@@ -171,9 +168,6 @@ router.post('/resend-otp', async (req, res) => {
     let emailSent = true;
     if (process.env.EMAIL_USER && process.env.EMAIL_PASSWORD) {
       emailSent = await sendOtpEmail(email, otp);
-    } else {
-      console.log('ℹ️ Email not configured — displaying new OTP for local testing');
-      console.log(`OTP: ${otp}`);
     }
 
     if (!emailSent && process.env.EMAIL_USER) {

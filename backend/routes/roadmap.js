@@ -142,12 +142,10 @@ router.post("/legacy", async (req, res) => {
 // Get single legacy roadmap by ID (this catches everything else)
 router.get("/:id", async (req, res) => {
   try {
-    console.log(`⚠️ Legacy route hit with ID: ${req.params.id}`);
     const roadmap = await Roadmap.findById(req.params.id);
     if (!roadmap) return res.status(404).json({ msg: "Roadmap not found" });
     res.json(roadmap);
   } catch (err) {
-    console.error(`❌ Legacy route error for ID ${req.params.id}:`, err.message);
     res.status(500).json({ error: err.message });
   }
 });

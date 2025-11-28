@@ -15,11 +15,10 @@ export function startTaskEmailScheduler() {
         const tasks = await Roadmap.find({ userId: user._id, status: 'pending' });
         for (const task of tasks) {
           await sendTaskMotivationEmail({ to: user.email, task, from: process.env.EMAIL_USER });
-          console.log(`📧 Motivational email sent to ${user.email} for task ${task.title || task.name || task._id}`);
         }
       }
     } catch (err) {
-      console.error('Scheduled email error:', err);
+      // Silent error
     }
   });
 }

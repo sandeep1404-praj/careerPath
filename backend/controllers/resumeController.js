@@ -69,7 +69,6 @@ export const createResume = async (req, res) => {
       data: resume,
     });
   } catch (error) {
-    console.error('Error creating resume:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to create resume',
@@ -118,7 +117,6 @@ export const getAllResumes = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Error fetching resumes:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch resumes',
@@ -163,7 +161,6 @@ export const getUserResumes = async (req, res) => {
       data: resumes,
     });
   } catch (error) {
-    console.error('Error fetching user resumes:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch user resumes',
@@ -211,7 +208,6 @@ export const getResumeById = async (req, res) => {
       data: resume,
     });
   } catch (error) {
-    console.error('Error fetching resume:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch resume',
@@ -269,7 +265,6 @@ export const updateResume = async (req, res) => {
       data: updatedResume,
     });
   } catch (error) {
-    console.error('Error updating resume:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to update resume',
@@ -320,7 +315,6 @@ export const deleteResume = async (req, res) => {
       data: { id },
     });
   } catch (error) {
-    console.error('Error deleting resume:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to delete resume',

@@ -50,7 +50,7 @@ For testing without email verification:
    ```
 
 4. **Test the connection:**
-   - Visit: `http://localhost:5000/api/health`
+   - Visit: `https://careerpath-54sr.onrender.com/api/health`
    - Should return: `{"status":"OK","message":"Server is running"}`
 
 ### Gmail Setup (Optional)

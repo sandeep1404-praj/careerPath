@@ -23,8 +23,8 @@ app.use(helmet({
   contentSecurityPolicy: false, // Disable CSP for now, configure later
 }));
 
-// Enable gzip compression
-app.use(compression());
+// Enable gzip compression with higher level for better compression
+app.use(compression({ level: 6, threshold: 1024 }));
 
 // CORS configuration
 app.use(cors({
@@ -46,25 +46,20 @@ app.use((req, res, next) => {
       try {
         req.body = JSON.parse(trimmed);
       } catch (parseError) {
-        console.warn('⚠️ Failed to parse text/plain body as JSON:', parseError.message);
+        // Silent parse error
       }
     }
   }
   next();
 });
 
-// Lightweight request logger
-app.use((req, res, next) => {
-  console.log(`📝 ${req.method} ${req.path}`);
-  next();
-});
-
 
 // Connect MongoDB
-connectDB().then(() => {
-  console.log('🔗 Database connected successfully');
-}).catch((error) => {
-  console.error('❌ Database connection failed:', error);
+connectDB();
+
+// Health check endpoint for Render
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
 // Routes
@@ -75,10 +70,6 @@ app.use('/api/tasks', tasksRoutes);
 app.use('/api/resumes', resumeRoutes);
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📧 Email verification: ${process.env.EMAIL_USER ? 'Configured' : 'Not configured'}`);
-  console.log(`🌐 Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:5173'}`);
-});
+app.listen(PORT, '0.0.0.0');
 
-  startTaskEmailScheduler();
+startTaskEmailScheduler();
