@@ -24,14 +24,16 @@ export const errorHandler = (err, req, res, next) => {
   err.statusCode = err.statusCode || 500;
   err.status = err.status || 'error';
 
-  // Log all errors with request details
-  console.error('ERROR 💥:', {
-    url: req.originalUrl,
-    method: req.method,
-    message: err.message,
-    statusCode: err.statusCode,
-    stack: err.stack
-  });
+  // Log only non-404 errors (reduce noise for routine probes like '/', '/favicon.ico')
+  if (err.statusCode !== 404) {
+    console.error('ERROR 💥:', {
+      url: req.originalUrl,
+      method: req.method,
+      message: err.message,
+      statusCode: err.statusCode,
+      stack: err.stack
+    });
+  }
 
   // Development error response (includes stack trace)
   if (process.env.NODE_ENV === 'development') {

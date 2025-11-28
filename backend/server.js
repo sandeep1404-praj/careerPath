@@ -81,6 +81,14 @@ app.get('/health', (req, res) => {
   res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
+// Root route to prevent noisy 404 logs from platform probes
+app.get('/', (req, res) => {
+  res.status(200).json({ message: 'CareerPath API running', health: '/health' });
+});
+
+// Favicon placeholder (avoid 404 spam from browsers requesting /favicon.ico)
+app.get('/favicon.ico', (req, res) => res.status(204).end());
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
