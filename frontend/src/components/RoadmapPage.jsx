@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { useRoadmap } from '../contexts/RoadmapContext.jsx';
@@ -9,7 +9,7 @@ import RoadmapFlow from './roadmap/RoadmapFlow.jsx';
 import {
   FaPalette, FaCog, FaSyncAlt, FaMobileAlt, FaWrench, FaChartBar, FaRobot,
   FaLock, FaLaptopCode, FaExclamationTriangle, FaClock, FaFolder, FaLink,
-  FaVideo, FaBook, FaGraduationCap, FaRocket, FaSearch, FaLightbulb, FaBullseye
+  FaVideo, FaBook, FaGraduationCap, FaRocket, FaSearch, FaLightbulb, FaBullseye, FaFilter
 } from 'react-icons/fa';
 
 function RoadmapPage() {
@@ -33,6 +33,7 @@ function RoadmapPage() {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [isAddingRoadmap, setIsAddingRoadmap] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [showFilters, setShowFilters] = useState(false);
 
   // Load roadmaps on component mount only once
   useEffect(() => {
@@ -41,26 +42,35 @@ function RoadmapPage() {
   }, []);
 
   // Handle page changes
-  const handlePageChange = (newPage) => {
+  const handlePageChange = useCallback((newPage) => {
     setCurrentPage(newPage);
     loadStaticRoadmaps(newPage, 10);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  }, [loadStaticRoadmaps]);
 
-  const detailRoadmap = detailId
-    ? staticRoadmaps.find(r => String(r.id) === detailId || String(r._id) === detailId)
-    : null;
+  const detailRoadmap = useMemo(() => 
+    detailId
+      ? staticRoadmaps.find(r => String(r.id) === detailId || String(r._id) === detailId)
+      : null,
+    [detailId, staticRoadmaps]
+  );
 
-  const filteredRoadmaps = detailId ? [] : staticRoadmaps.filter(roadmap => {
-    const matchesTrack = selectedTrack === 'all' || roadmap.track === selectedTrack;
-    const matchesSearch = searchQuery === '' ||
-      roadmap.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      roadmap.track.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (roadmap.description && roadmap.description.toLowerCase().includes(searchQuery.toLowerCase()));
-    return matchesTrack && matchesSearch;
-  });
+  const filteredRoadmaps = useMemo(() => {
+    if (detailId) return [];
+    return staticRoadmaps.filter(roadmap => {
+      const matchesTrack = selectedTrack === 'all' || roadmap.track === selectedTrack;
+      const matchesSearch = searchQuery === '' ||
+        roadmap.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        roadmap.track.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (roadmap.description && roadmap.description.toLowerCase().includes(searchQuery.toLowerCase()));
+      return matchesTrack && matchesSearch;
+    });
+  }, [detailId, staticRoadmaps, selectedTrack, searchQuery]);
 
-  const availableTracks = detailId ? [] : ['all', ...new Set(staticRoadmaps.map(roadmap => roadmap.track))];
+  const availableTracks = useMemo(() => 
+    detailId ? [] : ['all', ...new Set(staticRoadmaps.map(roadmap => roadmap.track))],
+    [detailId, staticRoadmaps]
+  );
 
   const detailCategories = detailRoadmap ? ['all', ...new Set((detailRoadmap.tasks || []).map(t => t.category).filter(Boolean))] : [];
   const detailFilteredTasks = detailRoadmap ? (
@@ -301,47 +311,80 @@ function RoadmapPage() {
 
   // LIST VIEW (no detailId)
   return (
-    <div className="min-h-screen bg-gray-900">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-blue-900 to-purple-900 py-12">
-        <div className="max-w-7xl mx-auto px-4">
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-900 to-gray-800">
+      {/* Header with gradient and improved design */}
+      <div className="relative bg-gradient-to-r from-blue-900 via-purple-900 to-indigo-900 py-16 overflow-hidden">
+        {/* Animated background pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-0 -left-4 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl animate-blob"></div>
+          <div className="absolute top-0 -right-4 w-72 h-72 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl animate-blob animation-delay-2000"></div>
+          <div className="absolute -bottom-8 left-20 w-72 h-72 bg-indigo-500 rounded-full mix-blend-multiply filter blur-xl animate-blob animation-delay-4000"></div>
+        </div>
+
+        <div className="relative max-w-7xl mx-auto px-4">
           <div className="text-center">
-            <h1 className="text-4xl font-bold text-white mb-4">
-              Career Roadmaps
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500/20 backdrop-blur-sm border border-blue-400/30 rounded-full text-blue-200 text-sm mb-6">
+              <FaRocket className="animate-bounce" />
+              <span>Your Career Journey Starts Here</span>
+            </div>
+            
+            <h1 className="text-5xl md:text-6xl font-bold text-white mb-4 tracking-tight">
+              Career <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">Roadmaps</span>
             </h1>
-            <p className="text-xl text-gray-300 mb-8">
-              Discover learning paths and build your personalized roadmap
+            <p className="text-xl text-gray-300 mb-10 max-w-2xl mx-auto">
+              Discover curated learning paths and build your personalized roadmap to success
             </p>
 
-            {/* Search and filter */}
-            <div className="flex flex-col md:flex-row gap-4 justify-center items-center max-w-2xl mx-auto">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search roadmaps..."
-                className="w-full md:flex-1 px-4 py-2 bg-gray-800 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-blue-500"
-              />
-              
-              <select
-                value={selectedTrack}
-                onChange={(e) => setSelectedTrack(e.target.value)}
-                className="w-full md:w-auto px-4 py-2 bg-gray-800 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-blue-500"
-              >
-                {availableTracks.map(track => (
-                  <option key={track} value={track}>
-                    {track === 'all' ? 'All Tracks' : track}
-                  </option>
-                ))}
-              </select>
-
-              {user && (
+            {/* Search and filter with improved design */}
+            <div className="flex flex-col gap-4 max-w-4xl mx-auto">
+              <div className="flex flex-col md:flex-row gap-4 items-center">
+                <div className="relative flex-1 w-full">
+                  <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search roadmaps by name, track, or description..."
+                    className="w-full pl-12 pr-4 py-3 bg-gray-800/50 backdrop-blur-sm text-white rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-400 transition-all"
+                  />
+                </div>
+                
                 <button
-                  onClick={() => setShowCustomForm(!showCustomForm)}
-                  className="w-full md:w-auto px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+                  onClick={() => setShowFilters(!showFilters)}
+                  className="px-6 py-3 bg-gray-800/50 backdrop-blur-sm hover:bg-gray-700/50 text-white rounded-lg transition-all border border-gray-600 flex items-center gap-2 w-full md:w-auto justify-center"
                 >
-                  {showCustomForm ? 'Cancel' : 'Add Custom Task'}
+                  <FaFilter />
+                  Filters {showFilters ? '▲' : '▼'}
                 </button>
+
+                {user && (
+                  <button
+                    onClick={() => setShowCustomForm(!showCustomForm)}
+                    className="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-lg transition-all shadow-lg shadow-green-500/20 flex items-center gap-2 w-full md:w-auto justify-center font-medium"
+                  >
+                    <span className="text-xl">+</span>
+                    {showCustomForm ? 'Cancel' : 'Custom Task'}
+                  </button>
+                )}
+              </div>
+
+              {/* Track filter - collapsible on mobile */}
+              {showFilters && (
+                <div className="flex flex-wrap gap-2 justify-center animate-fadeIn p-4 bg-gray-800/30 backdrop-blur-sm rounded-lg border border-gray-700">
+                  {availableTracks.map(track => (
+                    <button
+                      key={track}
+                      onClick={() => setSelectedTrack(track)}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all transform hover:scale-105 ${
+                        selectedTrack === track
+                          ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
+                          : 'bg-gray-700/50 text-gray-300 hover:bg-gray-600/50'
+                      }`}
+                    >
+                      {track === 'all' ? '🌐 All Tracks' : track}
+                    </button>
+                  ))}
+                </div>
               )}
             </div>
           </div>

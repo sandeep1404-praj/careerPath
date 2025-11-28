@@ -69,6 +69,15 @@ app.use("/api/roadmaps", roadmapRoutes);
 app.use('/api/tasks', tasksRoutes);
 app.use('/api/resumes', resumeRoutes);
 
+// Import error handlers
+import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
+
+// 404 handler for undefined routes
+app.use(notFoundHandler);
+
+// Global error handler (must be last)
+app.use(errorHandler);
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, '0.0.0.0');
 

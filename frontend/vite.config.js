@@ -12,15 +12,13 @@ export default defineConfig(() => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  // Use esbuild for JS minification and to drop console/debugger
+  esbuild: {
+    drop: ["console", "debugger"],
+  },
   build: {
-    // Enable minification
-    minify: 'terser',
-    terserOptions: {
-      compress: {
-        drop_console: true,
-        drop_debugger: true
-      }
-    },
+    // Use default esbuild minifier (fast, built-in)
+    minify: 'esbuild',
     // Optimize chunk splitting
     rollupOptions: {
       output: {

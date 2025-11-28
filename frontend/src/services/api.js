@@ -23,16 +23,31 @@ const apiRequest = async (endpoint, options = {}) => {
 
     const response = await fetch(`${API_BASE_URL}${endpoint}`, fetchOptions);
 
-    const data = await response.json();
+    // Try to parse JSON response
+    let data;
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      data = await response.json();
+    } else {
+      data = { message: await response.text() };
+    }
 
     if (!response.ok) {
-      throw new Error(data.message || `HTTP error! status: ${response.status}`);
+      // Extract error message from standardized error response
+      const errorMessage = data.message || data.error || `HTTP error! status: ${response.status}`;
+      const error = new Error(errorMessage);
+      error.status = response.status;
+      error.errors = data.errors; // Validation errors if any
+      error.data = data;
+      throw error;
     }
 
     return data;
   } catch (error) {
     if (error.name === 'TypeError' && error.message.includes('fetch')) {
-      throw new Error('Unable to connect to server. Please check if the backend is running.');
+      const connectionError = new Error('Unable to connect to server. Please check if the backend is running.');
+      connectionError.status = 503;
+      throw connectionError;
     }
     throw error;
   }

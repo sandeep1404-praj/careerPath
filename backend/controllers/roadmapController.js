@@ -1,104 +1,84 @@
 import StaticRoadmap from "../models/StaticRoadmap.js";
 import UserRoadmap from "../models/UserRoadmap.js";
+import { AppError, asyncHandler } from '../middleware/errorHandler.js';
 
 // Get all static roadmaps
-export const getStaticRoadmaps = async (req, res) => {
-  try {
-    // Check if database is connected
-    const mongoose = await import('mongoose');
-    if (mongoose.default.connection.readyState !== 1) {
-      return res.status(500).json({ 
-        message: 'Database connection error',
-        readyState: mongoose.default.connection.readyState
-      });
-    }
-
-    // Get pagination parameters from query
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    const skip = (page - 1) * limit;
-
-    // Get total count for pagination metadata
-    const totalCount = await StaticRoadmap.countDocuments();
-    const totalPages = Math.ceil(totalCount / limit);
-
-    // Fetch roadmaps with pagination using lean() for faster queries
-    const roadmaps = await StaticRoadmap.find()
-      .sort({ track: 1 })
-      .skip(skip)
-      .limit(limit)
-      .lean();
-
-    res.json({
-      roadmaps,
-      pagination: {
-        currentPage: page,
-        totalPages,
-        totalCount,
-        limit,
-        hasNextPage: page < totalPages,
-        hasPrevPage: page > 1
-      }
-    });
-  } catch (error) {
-    res.status(500).json({ 
-      message: 'Failed to fetch roadmaps', 
-      error: error.message,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
-    });
+export const getStaticRoadmaps = asyncHandler(async (req, res, next) => {
+  // Check if database is connected
+  const mongoose = await import('mongoose');
+  if (mongoose.default.connection.readyState !== 1) {
+    throw new AppError('Database connection error', 500);
   }
-};
+
+  // Get pagination parameters from query
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const skip = (page - 1) * limit;
+
+  // Get total count for pagination metadata
+  const totalCount = await StaticRoadmap.countDocuments();
+  const totalPages = Math.ceil(totalCount / limit);
+
+  // Fetch roadmaps with pagination using lean() for faster queries
+  const roadmaps = await StaticRoadmap.find()
+    .sort({ track: 1 })
+    .skip(skip)
+    .limit(limit)
+    .lean();
+
+  res.json({
+    roadmaps,
+    pagination: {
+      currentPage: page,
+      totalPages,
+      totalCount,
+      limit,
+      hasNextPage: page < totalPages,
+      hasPrevPage: page > 1
+    }
+  });
+});
 
 // Get a specific static roadmap by ID or track
-export const getStaticRoadmap = async (req, res) => {
-  try {
-    const { id } = req.params;
-    
-    // Try to find by ID first, then by track name
-    let roadmap = await StaticRoadmap.findOne({ id });
-    if (!roadmap) {
-      roadmap = await StaticRoadmap.findOne({ track: { $regex: new RegExp(id, 'i') } });
-    }
-    
-    if (!roadmap) {
-      return res.status(404).json({ message: 'Roadmap not found' });
-    }
-    
-    res.json(roadmap);
-  } catch (error) {
-    res.status(500).json({ 
-      message: 'Failed to fetch roadmap', 
-      error: error.message 
-    });
+export const getStaticRoadmap = asyncHandler(async (req, res, next) => {
+  const { id } = req.params;
+  
+  // Try to find by ID first, then by track name
+  let roadmap = await StaticRoadmap.findOne({ id });
+  if (!roadmap) {
+    roadmap = await StaticRoadmap.findOne({ track: { $regex: new RegExp(id, 'i') } });
   }
-};
+  
+  if (!roadmap) {
+    throw new AppError('Roadmap not found', 404);
+  }
+  
+  res.json(roadmap);
+});
 
 // Get user's personal roadmap
-export const getUserRoadmap = async (req, res) => {
-  try {
-    const userId = req.user.id;
-    
-    let userRoadmap = await UserRoadmap.findOne({ userId });
-    
-    // Create empty roadmap if it doesn't exist
-    if (!userRoadmap) {
-      userRoadmap = new UserRoadmap({
-        userId,
-        tasks: [],
-        preferences: {},
-        stats: { totalTasks: 0, completedTasks: 0, inProgressTasks: 0 }
-      });
-      await userRoadmap.save();
-    }
-    
-    res.json(userRoadmap);
-  } catch (error) {
-    res.status(500).json({ 
-      message: 'Failed to fetch user roadmap', 
-      error: error.message 
-    });
+export const getUserRoadmap = asyncHandler(async (req, res, next) => {
+  const userId = req.user._id || req.user.id;
+  
+  if (!userId) {
+    throw new AppError('User authentication failed', 401);
   }
-};
+  
+  let userRoadmap = await UserRoadmap.findOne({ userId });
+  
+  // Create empty roadmap if it doesn't exist
+  if (!userRoadmap) {
+    userRoadmap = new UserRoadmap({
+      userId,
+      tasks: [],
+      preferences: {},
+      stats: { totalTasks: 0, completedTasks: 0, inProgressTasks: 0 }
+    });
+    await userRoadmap.save();
+  }
+  
+  res.json(userRoadmap);
+});
 
 // Add task to user's roadmap
 export const addTaskToUserRoadmap = async (req, res) => {

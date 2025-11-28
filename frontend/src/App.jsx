@@ -133,16 +133,16 @@ const App = () => {
             </Suspense>
           )
         },
-        {
-          path: "/dashboard",
-          element: (
-            <Suspense fallback={<LoadingFallback />}>
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            </Suspense>
-          ),
-        },
+        // {
+        //   path: "/dashboard",
+        //   element: (
+        //     <Suspense fallback={<LoadingFallback />}>
+        //       <ProtectedRoute>
+        //         <Dashboard />
+        //       </ProtectedRoute>
+        //     </Suspense>
+        //   ),
+        // },
         {
           path: "/resumes",
           element: (

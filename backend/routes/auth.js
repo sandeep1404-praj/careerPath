@@ -6,6 +6,7 @@ import User from '../models/User.js';
 import OTP from '../models/OTP.js';
 import { sendOtpEmail, sendPasswordResetEmail } from '../utils/emailService.js';
 import { authenticateToken } from '../middleware/auth.js';
+import { AppError, asyncHandler } from '../middleware/errorHandler.js';
 
 const router = express.Router();
 
