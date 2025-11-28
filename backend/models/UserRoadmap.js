@@ -82,8 +82,7 @@ userRoadmapSchema.pre('save', function(next) {
   next();
 });
 
-// Index for faster queries
-userRoadmapSchema.index({ userId: 1 });
+// Indexes for faster queries (userId already has a unique index from schema definition)
 userRoadmapSchema.index({ 'tasks.status': 1 });
 userRoadmapSchema.index({ 'tasks.roadmapTrack': 1 });
 

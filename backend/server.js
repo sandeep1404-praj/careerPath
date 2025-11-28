@@ -26,13 +26,32 @@ app.use(helmet({
 // Enable gzip compression with higher level for better compression
 app.use(compression({ level: 6, threshold: 1024 }));
 
-// CORS configuration
+// CORS configuration (dynamic, supports multiple frontends)
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  process.env.FRONTEND_ORIGIN,
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'https://careerpathsan.netlify.app'
+].filter(Boolean);
+
 app.use(cors({
-  origin: [process.env.FRONTEND_URL , 'http://localhost:5173'],
+  origin: function(origin, callback) {
+    // Allow REST tools or same-origin (no origin header)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error(`CORS blocked: ${origin} not in allowed origins`));
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  maxAge: 600 // cache preflight for 10 minutes
 }));
+// Optionally specify success status for legacy browsers
+app.use((req, res, next) => {
+  res.header('Vary', 'Origin');
+  next();
+});
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
