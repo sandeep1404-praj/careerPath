@@ -33,7 +33,7 @@ const queueEmail = (emailFunction) => {
 
 // Create transporter with connection pooling
 const createTransporter = () => {
-  return nodemailer.createTransporter({
+  return nodemailer.createTransport({
     service: 'gmail',
     pool: true, // Use connection pooling
     maxConnections: 3,

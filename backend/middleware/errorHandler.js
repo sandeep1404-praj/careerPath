@@ -24,6 +24,15 @@ export const errorHandler = (err, req, res, next) => {
   err.statusCode = err.statusCode || 500;
   err.status = err.status || 'error';
 
+  // Log all errors with request details
+  console.error('ERROR 💥:', {
+    url: req.originalUrl,
+    method: req.method,
+    message: err.message,
+    statusCode: err.statusCode,
+    stack: err.stack
+  });
+
   // Development error response (includes stack trace)
   if (process.env.NODE_ENV === 'development') {
     return res.status(err.statusCode).json({
@@ -48,7 +57,6 @@ export const errorHandler = (err, req, res, next) => {
   }
 
   // Programming or unknown error: don't leak error details
-  console.error('ERROR 💥:', err);
   return res.status(500).json({
     success: false,
     status: 'error',
