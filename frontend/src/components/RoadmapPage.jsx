@@ -8,8 +8,7 @@ import RoadmapFlow from './roadmap/RoadmapFlow.jsx';
 
 import {
   FaPalette, FaCog, FaSyncAlt, FaMobileAlt, FaWrench, FaChartBar, FaRobot,
-  FaLock, FaLaptopCode, FaExclamationTriangle, FaClock, FaFolder, FaLink,
-  FaVideo, FaBook, FaGraduationCap, FaRocket, FaSearch, FaLightbulb, FaBullseye, FaFilter
+  FaLock, FaLaptopCode, FaExclamationTriangle, FaRocket, FaSearch, FaFilter
 } from 'react-icons/fa';
 
 function RoadmapPage() {

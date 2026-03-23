@@ -265,3 +265,35 @@ export const roadmapAPI = {
     });
   },
 };
+
+export const aiAPI = {
+  chatMentor: async (payload, token) => {
+    return apiRequest('/ai/chat', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+  },
+
+  generateRoadmap: async (payload, token) => {
+    return apiRequest('/ai/generate-roadmap', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+  },
+
+  acceptRoadmap: async (payload, token) => {
+    return apiRequest('/ai/accept-roadmap', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+  },
+};

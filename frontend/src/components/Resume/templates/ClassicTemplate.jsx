@@ -14,7 +14,7 @@ const ClassicTemplate = ({ resumeData }) => {
   }
 
   return (
-    <div className="w-full h-full bg-white overflow-auto">
+    <div className="w-full min-h-full bg-white font-sans" style={{ fontVariantLigatures: 'none' }}>
       <div className="p-4 sm:p-6 lg:p-8 text-[10px] sm:text-xs">
         {/* Header */}
         <div className="text-center mb-4 pb-4 border-b-4" style={{ borderColor: primaryColor }}>
@@ -186,9 +186,33 @@ const ClassicTemplate = ({ resumeData }) => {
                   <span className="text-xs font-bold px-2 py-0.5 rounded" style={{ backgroundColor: lightColor, color: darkColor }}>
                     {cert.year || '2024'}
                   </span>
-                  <div>
-                    <h4 className="text-xs font-semibold text-gray-900">{cert.title || 'Certificate'}</h4>
+                  <div className="flex-1">
+                    <h4 className="text-xs font-semibold text-gray-900">
+                      {cert.link ? (
+                        <a 
+                          href={cert.link.startsWith('http') ? cert.link : `https://${cert.link}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="hover:underline"
+                        >
+                          {cert.title || 'Certificate'}
+                        </a>
+                      ) : (
+                        cert.title || 'Certificate'
+                      )}
+                    </h4>
                     <p className="text-xs text-gray-600">{cert.issuer || 'Issuer'}</p>
+                    {cert.link && (
+                      <a 
+                        href={cert.link.startsWith('http') ? cert.link : `https://${cert.link}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs hover:underline break-all"
+                        style={{ color: primaryColor }}
+                      >
+                        {cert.link}
+                      </a>
+                    )}
                   </div>
                 </div>
               ))}

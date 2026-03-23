@@ -14,7 +14,7 @@ const CreativeTemplate = ({ resumeData }) => {
   }
 
   return (
-    <div className="w-full h-full bg-white overflow-auto">
+    <div className="w-full min-h-full bg-white font-sans" style={{ fontVariantLigatures: 'none' }}>
       <div className="text-[10px] sm:text-xs">
         {/* Header with Photo and Name */}
         <div 
@@ -308,8 +308,32 @@ const CreativeTemplate = ({ resumeData }) => {
                           {cert.year || '2024'}
                         </div>
                         <div className="flex-1">
-                          <h4 className="text-xs font-semibold text-gray-900">{cert.title || 'Certificate'}</h4>
+                          <h4 className="text-xs font-semibold text-gray-900">
+                            {cert.link ? (
+                              <a 
+                                href={cert.link.startsWith('http') ? cert.link : `https://${cert.link}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="hover:underline"
+                              >
+                                {cert.title || 'Certificate'}
+                              </a>
+                            ) : (
+                              cert.title || 'Certificate'
+                            )}
+                          </h4>
                           <p className="text-xs text-gray-600">{cert.issuer || 'Issuer'}</p>
+                          {cert.link && (
+                            <a 
+                              href={cert.link.startsWith('http') ? cert.link : `https://${cert.link}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs hover:underline break-all"
+                              style={{ color: primaryColor }}
+                            >
+                              {cert.link}
+                            </a>
+                          )}
                         </div>
                       </div>
                     ))}

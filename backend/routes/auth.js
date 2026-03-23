@@ -104,12 +104,20 @@ router.post('/login', async (req, res) => {
     const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ message: 'User not found' });
 
+    if (!user.password) {
+      return res.status(400).json({ message: 'Password login is not available for this account' });
+    }
+
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
     if (!user.isVerified) {
       return res.status(401).json({ message: 'Please verify your email with the OTP sent to you.' });
+    }
+
+    if (!process.env.JWT_SECRET) {
+      return res.status(500).json({ message: 'Server configuration error: missing JWT secret' });
     }
 
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1d' });

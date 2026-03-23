@@ -98,6 +98,44 @@ To use Gmail for sending emails, you need to:
 - **GET** `/api/auth/test`
 - Test endpoint to verify auth routes are working
 
+#### AI Mentor Chat
+- **POST** `/api/ai/chat`
+- Protected endpoint (Bearer token required)
+- Body: `{ userMessage }`
+
+#### AI Roadmap Preview Generation
+- **POST** `/api/ai/generate-roadmap`
+- Protected endpoint (Bearer token required)
+- Body: `{ userMessage }`
+- Uses Gemini key rotation flow: Gemini key 1 → key 2 → key 3 → internal fallback roadmap
+
+#### AI Roadmap Accept
+- **POST** `/api/ai/accept-roadmap`
+- Protected endpoint (Bearer token required)
+- Body: `{ roadmap }` where `roadmap` follows the generated roadmap schema
+
+### AI Environment Variables
+
+Add these variables in `.env`:
+
+```env
+GEMINI_API_KEY=your_gemini_api_key
+GEMINI_API_KEYS=key_one,key_two,key_three
+AI_PROVIDER=gemini
+GEMINI_MODEL=gemini-2.0-flash
+GEMINI_MODELS=gemini-2.0-flash,gemini-2.0-flash-lite,gemini-1.5-flash-latest
+```
+
+### Postman Collection for AI Mentor
+
+Import the file:
+
+- `AI_Mentor_API.postman_collection.json`
+
+Set Postman variables before running:
+- `baseUrl` → `http://localhost:5000`
+- `token` → your JWT token
+
 ### Troubleshooting
 
 #### Common Issues:

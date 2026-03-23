@@ -321,6 +321,12 @@ export function Navbar() {
               >
                 Roadmaps
               </Link>
+              <Link
+                to="/ai-mentor"
+                className={getLinkClasses('/ai-mentor')}
+              >
+                Mentor
+              </Link>
               
             </div>
           </div>
@@ -433,6 +439,14 @@ export function Navbar() {
             ref={(el) => (menuItemsRef.current[3] = el)}
           >
             Roadmaps
+          </Link>
+          <Link
+            to="/ai-mentor"
+            className={getLinkClasses('/ai-mentor', 'block py-2 text-base md:text-lg font-medium')}
+            onClick={toggleMobileMenu}
+            ref={(el) => (menuItemsRef.current[4] = el)}
+          >
+            Mentor
           </Link>
           {isAuthenticated && (
             <>

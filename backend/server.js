@@ -11,6 +11,7 @@ import roadmapRoutes from "./routes/roadmap.js";
 import tasksRoutes from './routes/tasks.js';
 import userRoutes from './routes/user.js';
 import resumeRoutes from './routes/resumeRoutes.js';
+import aiRoutes from './routes/aiRoutes.js';
 
 dotenv.config();
 const app = express();
@@ -95,6 +96,7 @@ app.use('/api/user', userRoutes);
 app.use("/api/roadmaps", roadmapRoutes);
 app.use('/api/tasks', tasksRoutes);
 app.use('/api/resumes', resumeRoutes);
+app.use('/api/ai', aiRoutes);
 
 // Import error handlers
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';

@@ -73,6 +73,7 @@ const resumeSchema = new mongoose.Schema(
         title: { type: String },
         issuer: { type: String },
         year: { type: String },
+        link: { type: String },
       },
     ],
 

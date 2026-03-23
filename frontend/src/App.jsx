@@ -23,6 +23,7 @@ const BlogSection = lazy(() => import("@/components/BlogSection"));
 const AboutSection = lazy(() => import("@/components/AboutSection"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const RoadmapPage = lazy(() => import("./components/RoadmapPage"));
+const AIMentorPage = lazy(() => import("./pages/AIMentorPage"));
 const ProfileRoadmapPage = lazy(() => import("./pages/ProfilePage"));
 const ResumeDashboard = lazy(() => import("./pages/Resume/ResumeDashboard"));
 const ResumeEditor = lazy(() => import("./pages/Resume/ResumeEditor"));
@@ -120,6 +121,16 @@ const App = () => {
           element: (
             <Suspense fallback={<LoadingFallback />}>
               <RoadmapPage />
+            </Suspense>
+          )
+        },
+        {
+          path: "/ai-mentor",
+          element: (
+            <Suspense fallback={<LoadingFallback />}>
+              <ProtectedRoute>
+                <AIMentorPage />
+              </ProtectedRoute>
             </Suspense>
           )
         },

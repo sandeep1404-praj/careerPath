@@ -500,6 +500,18 @@ const ResumeForm = ({ resumeData, setResumeData }) => {
                 placeholder="Year (e.g., 2023)"
                 className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-gray-50 text-gray-900 placeholder-gray-500 hover:border-gray-400 hover:bg-gray-100"
               />
+              <input
+                type="url"
+                value={cert.link || ''}
+                onChange={(e) =>
+                  handleArrayUpdate('certificates', index, {
+                    ...cert,
+                    link: e.target.value,
+                  })
+                }
+                placeholder="Certificate Link (e.g., https://...)"
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-gray-50 text-gray-900 placeholder-gray-500 hover:border-gray-400 hover:bg-gray-100"
+              />
             </div>
           </div>
         ))}
@@ -509,6 +521,7 @@ const ResumeForm = ({ resumeData, setResumeData }) => {
               title: '',
               issuer: '',
               year: '',
+              link: '',
             })
           }
           className="mt-2 px-4 py-2 border-2 border-dashed border-gray-300 text-gray-600 rounded-lg hover:border-blue-500 hover:text-blue-600 w-full"

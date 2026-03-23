@@ -103,18 +103,122 @@ const ResumePreview = () => {
     window.print();
   };
 
-  const handleDownload = () => {
-    // Temporarily change document title for the PDF filename
-    const originalTitle = document.title;
-    document.title = resume?.title || 'resume';
-    
-    // Trigger print dialog (user can save as PDF)
-    window.print();
-    
-    // Restore original title after a short delay
-    setTimeout(() => {
-      document.title = originalTitle;
-    }, 100);
+  const handleDownload = async () => {
+    try {
+      // Show loading toast
+      toast.info('Generating PDF...');
+      
+      // Import libraries dynamically
+      const { default: jsPDF } = await import('jspdf');
+      const { default: html2canvas } = await import('html2canvas');
+
+      const element = previewRef.current;
+      if (!element) {
+        toast.error('Unable to generate PDF');
+        return;
+      }
+
+      // Temporarily scroll to top to ensure proper positioning
+      const originalScrollTop = element.scrollTop;
+      element.scrollTop = 0;
+
+      // Wait a bit for any rendering to complete
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Store all links with their positions RELATIVE to the element
+      const linkElements = Array.from(element.querySelectorAll('a[href]'));
+      const elementRect = element.getBoundingClientRect();
+      
+      const linkData = linkElements.map((link) => {
+        const rect = link.getBoundingClientRect();
+        return {
+          href: link.getAttribute('href'),
+          x: rect.left - elementRect.left,
+          y: rect.top - elementRect.top + element.scrollTop,
+          width: rect.width,
+          height: rect.height,
+        };
+      });
+
+      // Capture the resume as canvas with high quality and proper color rendering
+      const scale = 3;
+      const canvas = await html2canvas(element, {
+        scale: scale, // Higher quality
+        useCORS: true,
+        allowTaint: false,
+        logging: false,
+        backgroundColor: '#ffffff',
+        windowWidth: element.scrollWidth,
+        windowHeight: element.scrollHeight,
+        scrollY: -window.scrollY,
+        scrollX: -window.scrollX,
+        imageTimeout: 0,
+        removeContainer: true,
+      });
+
+      // Restore scroll position
+      element.scrollTop = originalScrollTop;
+
+      const imgData = canvas.toDataURL('image/jpeg', 0.98); // Use JPEG with high quality
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+        compress: true,
+      });
+
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      
+      // Calculate dimensions to fit A4 properly
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+      const ratio = Math.min(pdfWidth / (imgWidth * 0.264583), pdfHeight / (imgHeight * 0.264583));
+      
+      const scaledWidth = imgWidth * 0.264583 * ratio;
+      const scaledHeight = imgHeight * 0.264583 * ratio;
+
+      // Center the image on the page
+      const x = (pdfWidth - scaledWidth) / 2;
+      const y = 0;
+
+      // Add the image with proper scaling
+      pdf.addImage(imgData, 'JPEG', x, y, scaledWidth, scaledHeight, '', 'FAST');
+
+      // Add clickable links on top of the image (WITHOUT visible underlines)
+      linkData.forEach((link) => {
+        try {
+          // Calculate relative position (percentage of the original element dimensions)
+          const relativeX = link.x / element.scrollWidth;
+          const relativeY = link.y / element.scrollHeight;
+          const relativeWidth = link.width / element.scrollWidth;
+          const relativeHeight = link.height / element.scrollHeight;
+
+          // Apply these percentages to the PDF image dimensions
+          const linkX = x + (relativeX * scaledWidth);
+          const linkY = y + (relativeY * scaledHeight);
+          const linkWidth = relativeWidth * scaledWidth;
+          const linkHeight = relativeHeight * scaledHeight;
+
+          // Ensure the link is within PDF bounds
+          if (linkX >= 0 && linkY >= 0 && linkX + linkWidth <= pdfWidth && linkY + linkHeight <= pdfHeight) {
+            // Add invisible clickable link area
+            pdf.link(linkX, linkY, linkWidth, linkHeight, { url: link.href });
+          }
+        } catch (err) {
+          console.warn('Failed to add link:', link.href, err);
+        }
+      });
+
+      // Download the PDF
+      const filename = `${resume?.title || 'resume'}.pdf`;
+      pdf.save(filename);
+      
+      toast.success('PDF downloaded successfully!');
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast.error('Failed to generate PDF');
+    }
   };
 
   if (loading) {
