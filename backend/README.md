@@ -122,8 +122,8 @@ Add these variables in `.env`:
 GEMINI_API_KEY=your_gemini_api_key
 GEMINI_API_KEYS=key_one,key_two,key_three
 AI_PROVIDER=gemini
-GEMINI_MODEL=gemini-2.0-flash
-GEMINI_MODELS=gemini-2.0-flash,gemini-2.0-flash-lite,gemini-1.5-flash-latest
+GEMINI_MODEL=gemini-2.5-flash
+GEMINI_MODELS=gemini-2.5-flash,gemini-2.5-flash-lite,gemini-flash-latest,gemini-2.0-flash,gemini-2.0-flash-lite
 ```
 
 ### Postman Collection for AI Mentor

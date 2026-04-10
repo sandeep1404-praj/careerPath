@@ -11,7 +11,7 @@ export const AppLayout = () => {
             <Navbar />
             <ScrollToTop />
             {/* <SplashCursor /> */}
-                <Outlet />
+            <Outlet />
             <Footer />
         </div>
     )
