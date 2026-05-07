@@ -186,7 +186,7 @@ export const addTaskToUserRoadmap = async (req, res) => {
 // Update user's roadmap (task status, order, notes, etc.)
 export const updateUserRoadmap = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user._id || req.user.id;
     const { action, taskId, updates, newOrder } = req.body;
 
     if (!action || !taskId) {
@@ -270,7 +270,7 @@ export const updateUserRoadmap = async (req, res) => {
 // Update user roadmap preferences
 export const updateUserPreferences = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user._id || req.user.id;
     let payload = req.body;
 
     if (typeof payload === 'string') {

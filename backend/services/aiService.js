@@ -24,6 +24,9 @@ IMPORTANT:
 - Understand typos
 - Do NOT correct spelling
 - Be practical
+- When giving advice, include 2-4 high-quality resources with valid URLs
+- Prefer official docs and trusted learning platforms
+- If exact deep link is uncertain, use the official page instead of guessing
 
 STYLE:
 - Short intro (1–2 lines)
@@ -126,20 +129,76 @@ const buildQuotaFallbackReply = (userMessage) => {
 const extractJson = (text) => {
   if (!text) return null;
 
+  const cleanedText = clampText(text)
+    .replace(/```json\s*/gi, "")
+    .replace(/```\s*/g, "")
+    .trim();
+
   try {
-    return JSON.parse(text);
+    return JSON.parse(cleanedText);
   } catch {}
 
-  const start = text.indexOf("{");
-  const end = text.lastIndexOf("}");
+  // Try broad slice first.
+  const start = cleanedText.indexOf("{");
+  const end = cleanedText.lastIndexOf("}");
 
   if (start !== -1 && end !== -1) {
     try {
-      return JSON.parse(text.slice(start, end + 1));
+      return JSON.parse(cleanedText.slice(start, end + 1));
     } catch {}
   }
 
+  // Recover the first balanced JSON object even when trailing characters exist.
+  if (start !== -1) {
+    let depth = 0;
+    let inString = false;
+    let escaped = false;
+
+    for (let i = start; i < cleanedText.length; i += 1) {
+      const ch = cleanedText[i];
+
+      if (escaped) {
+        escaped = false;
+        continue;
+      }
+
+      if (ch === "\\") {
+        escaped = true;
+        continue;
+      }
+
+      if (ch === '"') {
+        inString = !inString;
+        continue;
+      }
+
+      if (inString) continue;
+
+      if (ch === "{") depth += 1;
+      if (ch === "}") {
+        depth -= 1;
+        if (depth === 0) {
+          try {
+            return JSON.parse(cleanedText.slice(start, i + 1));
+          } catch {}
+        }
+      }
+    }
+  }
+
   return null;
+};
+
+const normalizeMentorReply = (value) => {
+  const text = clampText(value);
+  if (!text) return "";
+
+  const nested = extractJson(text);
+  if (nested && typeof nested === "object" && typeof nested.reply === "string") {
+    return clampText(nested.reply);
+  }
+
+  return text;
 };
 
 /* =========================
@@ -236,6 +295,13 @@ IMPORTANT:
 - If clear goal → roadmap
 - If unclear → ask questions
 - Remember previous conversation context
+- For career guidance, include a "Resources" section in reply with 2-4 items
+- Each resource must include title, why it helps, and a valid https URL
+- Do not output placeholder or fake links
+- TAG each resource link with categories: [Learning] or [Practice], and [Free] or [Paid]
+- Example format: "[Learning][Free] https://example.com"
+- Include mix of learning (tutorials, courses) and practicing (labs, challenges) resources
+- Include both free and paid options when available
 
 ${contextSection}Return ONLY JSON:
 
@@ -263,10 +329,14 @@ export const getMentorChatResponse = async ({ userMessage, enrichedContext = '' 
         ? parsed.followUpQuestions.map((q) => clampText(q)).filter(Boolean)
         : [];
 
+      const fallbackFollowUps = Array.isArray(parsed.questions)
+        ? parsed.questions.map((q) => clampText(q)).filter(Boolean)
+        : [];
+
       return {
-        reply: clampText(parsed.reply),
+        reply: normalizeMentorReply(parsed.reply || parsed.response || parsed.message),
         needsMoreInfo: Boolean(parsed.needsMoreInfo),
-        followUpQuestions,
+        followUpQuestions: followUpQuestions.length ? followUpQuestions : fallbackFollowUps,
       };
     }
 
@@ -319,6 +389,14 @@ INSTRUCTIONS:
 - Assume beginner if not specified
 - Do NOT ask questions
 - Generate full roadmap
+- For each task, include 1-3 relevant resources
+- Resource links must be real and start with https://
+- Prefer official documentation first, then trusted tutorials
+- If unsure of a deep link, use the official docs/course page
+- TAG each resource with categories: [Learning] or [Practice], and [Free] or [Paid]
+- Example: "[Learning][Free] https://python.org/docs"
+- Mix learning resources (courses, docs) with practice resources (labs, challenges)
+- Include both free and paid options in resources array
 
 IMPORTANT RULES FOR TIME:
 - DO NOT use fixed duration like "3 months"
