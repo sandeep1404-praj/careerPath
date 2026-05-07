@@ -296,4 +296,40 @@ export const aiAPI = {
       body: JSON.stringify(payload),
     });
   },
+
+  getSessionContext: async (token) => {
+    return apiRequest('/ai/session-context', {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  },
+
+  getUserProfileMemory: async (token) => {
+    return apiRequest('/ai/user-profile-memory', {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  },
+
+  deleteChatSession: async (sessionId, token) => {
+    return apiRequest(`/ai/session/${sessionId}`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  },
+
+  deleteAllChatSessions: async (token) => {
+    return apiRequest('/ai/sessions', {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  },
 };

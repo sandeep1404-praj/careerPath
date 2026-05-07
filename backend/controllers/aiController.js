@@ -1,7 +1,10 @@
 import crypto from 'node:crypto';
 import UserRoadmap from '../models/UserRoadmap.js';
+import ChatSession from '../models/ChatSession.js';
+import UserProfileMemory from '../models/UserProfileMemory.js';
 import { asyncHandler, AppError } from '../middleware/errorHandler.js';
 import { generatePersonalizedRoadmap, getMentorChatResponse } from '../services/aiService.js';
+import { summarizeConversation, buildSessionContext } from '../services/conversationSummarizer.js';
 
 const getUserContext = async (userId) => {
 	let userRoadmap = await UserRoadmap.findOne({ userId });
@@ -25,13 +28,112 @@ const getUserContext = async (userId) => {
 	};
 };
 
+const getOrCreateChatSession = async (userId, sessionId) => {
+	let session = await ChatSession.findOne({ sessionId, userId });
+	if (!session) {
+		session = new ChatSession({
+			userId,
+			sessionId,
+			messages: [],
+			sessionContext: {},
+			isActive: true
+		});
+		await session.save();
+	}
+	return session;
+};
+
+const getSessionContextData = async (userId) => {
+	// Get the most recent active session with messages
+	const recentSession = await ChatSession.findOne(
+		{ userId, isActive: true, messageCount: { $gt: 0 } },
+		{},
+		{ sort: { updatedAt: -1 } }
+	);
+
+	if (!recentSession) {
+		return { summary: null, recentMessages: [], pastSummary: null };
+	}
+
+	// Get recent messages (last 6 messages for context)
+	const recentMessages = recentSession.messages.slice(-6);
+
+	// Get summary if available
+	let pastSummary = recentSession.summary;
+
+	// If more than 10 messages and no summary yet, create one
+	if (recentSession.messages.length > 10 && !pastSummary) {
+		pastSummary = await summarizeConversation(
+			recentSession.messages,
+			recentSession.sessionContext?.careerGoal
+		);
+		if (pastSummary) {
+			recentSession.summary = pastSummary;
+			recentSession.lastSummarizedAt = Date.now();
+			await recentSession.save();
+		}
+	}
+
+	return {
+		summary: recentSession,
+		recentMessages,
+		pastSummary
+	};
+};
+
+const updateUserProfileMemory = async (userId, mentorContext) => {
+	let profileMemory = await UserProfileMemory.findOne({ userId });
+
+	if (!profileMemory) {
+		profileMemory = new UserProfileMemory({
+			userId,
+			careerGoals: [],
+			skillLevel: 'Beginner',
+			interests: [],
+			timeAvailability: '',
+			learningPreferences: {
+				pace: 'moderate',
+				learningStyle: [],
+				preferredRoadmapLength: 'medium'
+			},
+			completedRoadmaps: [],
+			preferences: {},
+			keyAchievements: []
+		});
+	}
+
+	// Update profile based on mentor context
+	if (mentorContext.careerGoal && !profileMemory.careerGoals.includes(mentorContext.careerGoal)) {
+		profileMemory.careerGoals.push(mentorContext.careerGoal);
+	}
+
+	if (mentorContext.skillLevel) {
+		profileMemory.skillLevel = mentorContext.skillLevel;
+	}
+
+	if (mentorContext.interests?.length > 0) {
+		profileMemory.interests = [
+			...new Set([...profileMemory.interests, ...mentorContext.interests])
+		];
+	}
+
+	if (mentorContext.timeAvailability) {
+		profileMemory.timeAvailability = mentorContext.timeAvailability;
+	}
+
+	profileMemory.lastUpdated = Date.now();
+	await profileMemory.save();
+
+	return profileMemory;
+};
+
 export const chatWithMentor = asyncHandler(async (req, res) => {
 	const userId = req.user?._id || req.user?.id;
 	if (!userId) {
 		throw new AppError('User authentication failed', 401);
 	}
 
-	const { userMessage, messages = [], mentorContext = {} } = req.body;
+	const { userMessage, messages = [], mentorContext = {}, sessionId = null } = req.body;
 	if (!userMessage || typeof userMessage !== 'string') {
 		throw new AppError('userMessage is required', 400);
 	}
@@ -45,7 +147,24 @@ export const chatWithMentor = asyncHandler(async (req, res) => {
 				.filter((message) => message.content.trim())
 		: [];
 
+	// Get or create session
+	const finalSessionId = sessionId || `session-${userId}-${Date.now()}`;
+	const chatSession = await getOrCreateChatSession(userId, finalSessionId);
+
+	// Get session context data (past summary + recent messages)
+	const { pastSummary } = await getSessionContextData(userId);
+
+	// Update user profile memory
+	await updateUserProfileMemory(userId, mentorContext);
+
 	const { completedTasks, preferences, currentTrack } = await getUserContext(userId);
+
+	// Build enriched context with session history
+	const enrichedContext = await buildSessionContext(
+		conversationHistory.slice(-4), // Recent messages
+		pastSummary,
+		mentorContext
+	);
 
 	const result = await getMentorChatResponse({
 		userMessage,
@@ -53,11 +172,29 @@ export const chatWithMentor = asyncHandler(async (req, res) => {
 		preferences,
 		currentTrack,
 		conversationHistory,
-		mentorContext
+		mentorContext,
+		enrichedContext
 	});
+
+	// Store message in chat session
+	chatSession.messages.push({
+		role: 'user',
+		content: userMessage,
+		timestamp: new Date()
+	});
+
+	chatSession.messages.push({
+		role: 'assistant',
+		content: result.reply,
+		timestamp: new Date()
+	});
+
+	chatSession.sessionContext = mentorContext;
+	await chatSession.save();
 
 	res.json({
 		success: true,
+		sessionId: finalSessionId,
 		...result
 	});
 });
@@ -214,5 +351,100 @@ export const acceptGeneratedRoadmap = asyncHandler(async (req, res) => {
 		roadmapId,
 		tasksAdded: tasksToInsert.length,
 		stats: userRoadmap.stats
+	});
+});
+
+export const getSessionContext = asyncHandler(async (req, res) => {
+	const userId = req.user?._id || req.user?.id;
+	if (!userId) {
+		throw new AppError('User authentication failed', 401);
+	}
+
+	const { pastSummary, recentMessages, summary } = await getSessionContextData(userId);
+
+	res.json({
+		success: true,
+		sessionContext: {
+			pastSummary,
+			recentMessages: recentMessages.map((msg) => ({
+				role: msg.role,
+				content: msg.content
+			})),
+			lastUpdated: summary?.updatedAt || null,
+			messageCount: summary?.messageCount || 0
+		}
+	});
+});
+
+export const getUserProfileMemory = asyncHandler(async (req, res) => {
+	const userId = req.user?._id || req.user?.id;
+	if (!userId) {
+		throw new AppError('User authentication failed', 401);
+	}
+
+	let profileMemory = await UserProfileMemory.findOne({ userId });
+
+	if (!profileMemory) {
+		profileMemory = new UserProfileMemory({
+			userId,
+			careerGoals: [],
+			skillLevel: 'Beginner',
+			interests: [],
+			timeAvailability: '',
+			learningPreferences: {
+				pace: 'moderate',
+				learningStyle: [],
+				preferredRoadmapLength: 'medium'
+			},
+			completedRoadmaps: [],
+			preferences: {},
+			keyAchievements: []
+		});
+		await profileMemory.save();
+	}
+
+	res.json({
+		success: true,
+		profileMemory
+	});
+});
+
+export const deleteChatSession = asyncHandler(async (req, res) => {
+	const userId = req.user?._id || req.user?.id;
+	if (!userId) {
+		throw new AppError('User authentication failed', 401);
+	}
+
+	const { sessionId } = req.params;
+	if (!sessionId || typeof sessionId !== 'string') {
+		throw new AppError('sessionId is required', 400);
+	}
+
+	// Verify the session belongs to the user
+	const session = await ChatSession.findOne({ sessionId, userId });
+	if (!session) {
+		throw new AppError('Chat session not found or unauthorized', 404);
+	}
+
+	await ChatSession.deleteOne({ sessionId, userId });
+
+	res.json({
+		success: true,
+		message: 'Chat session deleted successfully'
+	});
+});
+
+export const deleteAllChatSessions = asyncHandler(async (req, res) => {
+	const userId = req.user?._id || req.user?.id;
+	if (!userId) {
+		throw new AppError('User authentication failed', 401);
+	}
+
+	const result = await ChatSession.deleteMany({ userId });
+
+	res.json({
+		success: true,
+		message: `${result.deletedCount} chat session(s) deleted successfully`,
+		deletedCount: result.deletedCount
 	});
 });

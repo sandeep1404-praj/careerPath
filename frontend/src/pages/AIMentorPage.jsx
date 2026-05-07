@@ -8,6 +8,8 @@ import { aiAPI } from '@/services/api';
 import toast from '@/utils/toast';
 
 const CHAT_HISTORY_STORAGE_KEY = 'careerpath.ai-mentor.chat-history.v1';
+const SESSION_ID_STORAGE_KEY = 'careerpath.ai-mentor.session-id.v1';
+const SESSION_CONTEXT_STORAGE_KEY = 'careerpath.ai-mentor.session-context.v1';
 const MAX_CHAT_HISTORY = 12;
 
 const createSessionId = () => `session-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -129,7 +131,13 @@ const mentorHighlights = [
 const AIMentorPage = () => {
   const { token } = useAuth();
   const { loadUserRoadmap } = useRoadmap();
-  const [activeSessionId, setActiveSessionId] = useState(() => createSessionId());
+  const [activeSessionId, setActiveSessionId] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const stored = window.localStorage.getItem(SESSION_ID_STORAGE_KEY);
+      if (stored) return stored;
+    }
+    return createSessionId();
+  });
   const [chatSeed, setChatSeed] = useState(null);
   const [chatVersion, setChatVersion] = useState(0);
   const [chatHistory, setChatHistory] = useState([]);
@@ -139,6 +147,7 @@ const AIMentorPage = () => {
   const [mentorExplanation, setMentorExplanation] = useState('');
   const [aiMeta, setAiMeta] = useState({ provider: '', fromCache: false, error: '' });
   const [isAcceptingAiRoadmap, setIsAcceptingAiRoadmap] = useState(false);
+  const [sessionContext, setSessionContext] = useState(null);
 
   useEffect(() => {
     const cachedHistory = loadCachedHistory();
@@ -154,15 +163,51 @@ const AIMentorPage = () => {
     setChatVersion((previousVersion) => previousVersion + 1);
   }, []);
 
+  // Fetch session context from server
+  useEffect(() => {
+    if (!token) return;
+
+    const fetchSessionContext = async () => {
+      try {
+        const response = await aiAPI.getSessionContext(token);
+        if (response.success && response.sessionContext) {
+          setSessionContext(response.sessionContext);
+          if (typeof window !== 'undefined') {
+            window.localStorage.setItem(SESSION_CONTEXT_STORAGE_KEY, JSON.stringify(response.sessionContext));
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch session context:', error);
+        // Try to load from localStorage as fallback
+        if (typeof window !== 'undefined') {
+          const cached = window.localStorage.getItem(SESSION_CONTEXT_STORAGE_KEY);
+          if (cached) {
+            try {
+              setSessionContext(JSON.parse(cached));
+            } catch (e) {
+              // Ignore parsing errors
+            }
+          }
+        }
+      }
+    };
+
+    fetchSessionContext();
+    // Refresh every 5 minutes
+    const interval = setInterval(fetchSessionContext, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [token]);
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
     try {
       window.localStorage.setItem(CHAT_HISTORY_STORAGE_KEY, JSON.stringify(chatHistory));
+      window.localStorage.setItem(SESSION_ID_STORAGE_KEY, activeSessionId);
     } catch (error) {
       // Ignore storage write failures (private mode, quota limits, etc.)
     }
-  }, [chatHistory]);
+  }, [chatHistory, activeSessionId]);
 
   const handleGeneratedRoadmap = ({ roadmap, mentorExplanation: readablePlan, provider, fromCache, error }) => {
     setGeneratedRoadmap(roadmap || null);
@@ -239,6 +284,73 @@ const AIMentorPage = () => {
     setMentorExplanation('');
   };
 
+  const handleDeleteSession = async (sessionId, e) => {
+    e.stopPropagation();
+
+    if (!window.confirm('Delete this chat session?')) return;
+
+    try {
+      // Remove from local state immediately
+      setChatHistory((prev) => prev.filter((session) => session.id !== sessionId));
+      
+      // Remove from localStorage immediately
+      const cachedHistory = loadCachedHistory().filter((session) => session.id !== sessionId);
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem(CHAT_HISTORY_STORAGE_KEY, JSON.stringify(cachedHistory));
+      }
+
+      // If deleted session was active, create new session
+      if (activeSessionId === sessionId) {
+        handleNewSession();
+      }
+
+      toast.success('Chat session deleted');
+
+      // Sync with backend asynchronously (non-blocking)
+      if (token) {
+        try {
+          await aiAPI.deleteChatSession(sessionId, token);
+        } catch (backendError) {
+          // Silently ignore backend errors since localStorage is primary storage
+          console.warn('Backend sync failed:', backendError);
+        }
+      }
+    } catch (error) {
+      toast.error(error.message || 'Failed to delete session');
+    }
+  };
+
+  const handleDeleteAllSessions = async () => {
+    if (!window.confirm('Delete ALL chat sessions? This cannot be undone.')) return;
+
+    try {
+      // Clear local state immediately
+      setChatHistory([]);
+      
+      // Remove from localStorage immediately
+      if (typeof window !== 'undefined') {
+        window.localStorage.removeItem(CHAT_HISTORY_STORAGE_KEY);
+      }
+      
+      // Create new session
+      handleNewSession();
+      
+      toast.success('All chat sessions deleted');
+
+      // Sync with backend asynchronously (non-blocking)
+      if (token) {
+        try {
+          await aiAPI.deleteAllChatSessions(token);
+        } catch (backendError) {
+          // Silently ignore backend errors since localStorage is primary storage
+          console.warn('Backend sync failed:', backendError);
+        }
+      }
+    } catch (error) {
+      toast.error(error.message || 'Failed to delete sessions');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-950 w-full py-3 md:py-4">
       <div className="w-full px-3 md:px-4 flex flex-col lg:flex-row gap-3 md:gap-4 min-h-[calc(100vh-24px)] md:min-h-[calc(100vh-32px)]">
@@ -252,7 +364,7 @@ const AIMentorPage = () => {
             <nav className="grid grid-cols-2 gap-2 lg:grid-cols-1 lg:gap-3">
               <button
                 onClick={handleNewSession}
-                className="w-full text-left px-4 py-3 rounded-lg border border-dashed border-blue-700 text-blue-200 bg-transparent hover:bg-blue-900/10 transition-colors"
+                className="w-full text-left px-4 py-3 rounded-lg border border-dashed  text-blue-200 bg-transparent hover:bg-blue-900/10 transition-colors"
               >
                 New Session
               </button>
@@ -271,6 +383,14 @@ const AIMentorPage = () => {
 
             {isHistoryOpen ? (
               <div className="mt-5 space-y-3 max-h-[420px] overflow-y-auto pr-1">
+                {chatHistory.length > 0 && (
+                  <button
+                    onClick={handleDeleteAllSessions}
+                    className="w-full text-center px-3 py-2 text-xs bg-red-600/20 hover:bg-red-600/30 text-red-300 rounded-lg transition-colors border border-red-600/30 font-medium"
+                  >
+                    Delete All Chats
+                  </button>
+                )}
                 {chatHistory.length === 0 ? (
                   <div className="rounded-xl border border-gray-800 bg-gray-950/60 p-3">
                     <h3 className="text-sm font-semibold text-white">No cached chats yet</h3>
@@ -322,6 +442,14 @@ const AIMentorPage = () => {
                               </div>
                             ))}
                           </div>
+                          <div className="border-t border-gray-800 px-3 py-2 flex gap-2">
+                            <button
+                              onClick={(e) => handleDeleteSession(session.id, e)}
+                              className="flex-1 text-xs px-2 py-1.5 bg-red-600/20 hover:bg-red-600/30 text-red-300 rounded-lg transition-colors border border-red-600/30"
+                            >
+                              Delete
+                            </button>
+                          </div>
                         </div>
                       </div>
                     );
@@ -347,8 +475,8 @@ const AIMentorPage = () => {
         </aside>
 
         <main className="flex-1 flex justify-center min-h-0">
-          <div className="w-full bg-gray-800/60 rounded-3xl p-4 md:p-6 border-2 md:border-4 border-gray-700 min-h-0">
-            <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="w-full bg-gray-800/60 rounded-3xl border-gray-700 min-h-0">
+            {/* <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div className="max-w-2xl">
                 <h1 className="text-2xl md:text-3xl font-extrabold text-white">Get a clear career path in a few messages</h1>
                 <p className="text-gray-300 mt-1">Choose a direction, share your level and availability, then get practical steps, tools, and mini-projects.</p>
@@ -360,16 +488,16 @@ const AIMentorPage = () => {
               >
                 Back to Roadmaps
               </Link>
-            </div>
+            </div> */}
 
-            <div className="mb-6 grid gap-3 md:grid-cols-3">
+            {/* <div className="mb-6 grid gap-3 md:grid-cols-3">
               {starterPrompts.map((prompt) => (
                 <div key={prompt} className="rounded-2xl border border-gray-700 bg-gray-900/70 p-4">
                   <p className="text-xs uppercase tracking-[0.18em] text-gray-400">Quick start</p>
                   <p className="mt-2 text-sm text-gray-100 leading-6">{prompt}</p>
                 </div>
               ))}
-            </div>
+            </div> */}
 
             <AIMentorChat
               token={token}
@@ -378,6 +506,8 @@ const AIMentorPage = () => {
               seedConversation={chatSeed}
               conversationVersion={chatVersion}
               onConversationChange={handleConversationChange}
+              sessionId={activeSessionId}
+              sessionContext={sessionContext}
             />
 
             {mentorExplanation && (

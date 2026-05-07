@@ -56,7 +56,7 @@ const sanitizeMentorContext = (mentorContext) => {
 	};
 };
 
-const AIMentorChat = ({ token, onRoadmapGenerated, seedConversation, conversationVersion, onConversationChange }) => {
+const AIMentorChat = ({ token, onRoadmapGenerated, seedConversation, conversationVersion, onConversationChange, sessionId = null, sessionContext = null }) => {
 	const [messages, setMessages] = useState(() => sanitizeMessages(seedConversation?.messages));
 	const [input, setInput] = useState('');
 	const [isChatting, setIsChatting] = useState(false);
@@ -72,11 +72,13 @@ const AIMentorChat = ({ token, onRoadmapGenerated, seedConversation, conversatio
 
 	const messagesRef = useRef(null);
 
+	const hasUserMessages = useMemo(() => messages.some((m) => m.role === 'user'), [messages]);
+
 	useEffect(() => {
 		if (messagesRef.current) {
 			messagesRef.current.scrollTop = messagesRef.current.scrollHeight;
 		}
-	}, [messages]);
+	}, [messages, isChatting]);
 
 	useEffect(() => {
 		setMessages(sanitizeMessages(seedConversation?.messages));
@@ -113,11 +115,19 @@ const AIMentorChat = ({ token, onRoadmapGenerated, seedConversation, conversatio
 		setIsChatting(true);
 
 		try {
-			const response = await aiAPI.chatMentor({
+			const chatPayload = {
 				userMessage,
 				messages: updatedMessages,
-				mentorContext
-			}, token);
+				mentorContext,
+				sessionId: sessionId || undefined
+			};
+
+			// Add session context if available
+			if (sessionContext?.pastSummary) {
+				chatPayload.pastSummary = sessionContext.pastSummary;
+			}
+
+			const response = await aiAPI.chatMentor(chatPayload, token);
 
 			const followUps = Array.isArray(response.followUpQuestions)
 				? response.followUpQuestions
@@ -192,7 +202,7 @@ const AIMentorChat = ({ token, onRoadmapGenerated, seedConversation, conversatio
 	};
 
 	return (
-		<div className="bg-gray-800/70 border border-gray-700 rounded-xl p-5 flex flex-col h-[calc(100vh-240px)] min-h-[560px]">
+		<div className="bg-gray-800/70 border border-gray-700 rounded-xl p-5 flex flex-col h-[calc(100vh-240px)] min-h-[1060px]">
 			<div className="flex items-center justify-between mb-4">
 				<h3 className="text-lg font-semibold text-white">AI Career Mentor</h3>
 				<button
@@ -217,11 +227,24 @@ const AIMentorChat = ({ token, onRoadmapGenerated, seedConversation, conversatio
 							<div className="w-8 h-8 rounded-full bg-blue-700 flex items-center justify-center text-xs text-white">You</div>
 						</div>
 					)
-				)}
+					)}
+
+					{isChatting && (
+						<div className="flex items-start gap-3">
+							<div className="w-10 h-10 rounded-lg bg-gray-700 flex items-center justify-center text-gray-200">🤖</div>
+							<div className="bg-gray-700 text-gray-100 px-4 py-3 rounded-xl max-w-[50%] text-sm">
+								<div className="flex items-center gap-2">
+									<span className="inline-block w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0s' }} />
+									<span className="inline-block w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.12s' }} />
+									<span className="inline-block w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.24s' }} />
+								</div>
+							</div>
+						</div>
+					)}
 			</div>
 
-			<div className="mt-4 flex items-center gap-2">
-				<div className="flex-1 relative">
+			<div className={`mt-4 flex items-center gap-2 ${!hasUserMessages ? 'justify-center' : ''}`}>
+				<div className={`${hasUserMessages ? 'flex-1' : 'w-3/4'} relative`}>
 					<textarea
 						value={input}
 						onChange={(event) => setInput(event.target.value)}

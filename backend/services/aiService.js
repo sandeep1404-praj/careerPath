@@ -223,16 +223,21 @@ const callAI = async (prompt) => {
 /* =========================
    CHAT PROMPT
 ========================= */
-const buildChatPrompt = (userMessage) => `
-${MENTOR_BEHAVIOR_PROMPT}
+const buildChatPrompt = (userMessage, enrichedContext = '') => {
+  const contextSection = enrichedContext
+    ? `\n=== SESSION CONTEXT ===\n${enrichedContext}\n\n`
+    : '';
+
+  return `${MENTOR_BEHAVIOR_PROMPT}
 
 IMPORTANT:
 - Handle greetings naturally
 - If career-related → guide properly
 - If clear goal → roadmap
 - If unclear → ask questions
+- Remember previous conversation context
 
-Return ONLY JSON:
+${contextSection}Return ONLY JSON:
 
 {
   "reply": "string",
@@ -243,13 +248,14 @@ Return ONLY JSON:
 User:
 "${userMessage}"
 `;
+};
 
 /* =========================
    CHAT FUNCTION
 ========================= */
-export const getMentorChatResponse = async ({ userMessage }) => {
+export const getMentorChatResponse = async ({ userMessage, enrichedContext = '' }) => {
   try {
-    const aiText = await callAI(buildChatPrompt(userMessage));
+    const aiText = await callAI(buildChatPrompt(userMessage, enrichedContext));
     const parsed = extractJson(aiText);
 
     if (parsed && typeof parsed === "object") {
