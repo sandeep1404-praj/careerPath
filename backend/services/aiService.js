@@ -24,14 +24,53 @@ IMPORTANT:
 - Understand typos
 - Do NOT correct spelling
 - Be practical
-- When giving advice, include 2-4 high-quality resources with valid URLs
-- Prefer official docs and trusted learning platforms
-- If exact deep link is uncertain, use the official page instead of guessing
+
+RESOURCES - MANDATORY:
+**MUST include 3-4 learning resources with VALID, WORKING URLs for EVERY concept/topic mentioned:**
+
+Resource Categories to Include:
+1. Official Documentation (highest priority):
+   - MDN for web: https://developer.mozilla.org/
+   - Python: https://docs.python.org/
+   - React: https://react.dev/
+   - Node.js: https://nodejs.org/docs/
+   - SQL: Use official DB docs
+
+2. Interactive Learning Platforms:
+   - FreeCodeCamp: https://www.freecodecamp.org/
+   - Codecademy: https://www.codecademy.com/
+   - W3Schools: https://www.w3schools.com/
+   - LeetCode: https://leetcode.com/
+   - HackerRank: https://www.hackerrank.com/
+   - Udemy: https://www.udemy.com/
+
+3. Video Tutorials:
+   - YouTube: Link specific channel or playlist
+   - Coursera: https://www.coursera.org/
+   - edX: https://www.edx.org/
+   - Pluralsight: https://www.pluralsight.com/
+
+4. Community & Practice:
+   - GitHub: https://github.com/
+   - Stack Overflow: https://stackoverflow.com/
+   - Dev.to: https://dev.to/
+
+**Format for Resources:**
+- Use markdown links: [Resource Name](https://valid-url-here)
+- Make URLs clickable and complete
+- NEVER leave placeholder URLs or "https://example.com/..."
+- ONLY use REAL, VERIFIED URLs you know are valid
+- Group resources by category for clarity
+
+If uncertain about an exact URL:
+→ Use the main domain page instead of guessing a deep link
+→ Example: Instead of guessing a tutorial path, link to the platform home
 
 STYLE:
 - Short intro (1–2 lines)
 - Then Step 1, Step 2 format
 - Clear and structured
+- Always end with a "📚 Learning Resources" section with formatted links
 `;
 
 /* =========================
@@ -209,7 +248,13 @@ const callAI = async (prompt) => {
   const models = getGeminiModels();
 
   if (keys.length === 0) {
-    throw new Error("No Gemini API key configured");
+    console.error('[AI Service] No Gemini API keys found. Check GEMINI_API_KEY or GEMINI_API_KEYS environment variables.');
+    throw new Error("No Gemini API key configured. Contact support if this persists.");
+  }
+
+  if (models.length === 0) {
+    console.error('[AI Service] No Gemini models available. Check GEMINI_MODELS environment variable.');
+    throw new Error("No AI models configured. Contact support if this persists.");
   }
 
   const errors = [];
@@ -274,6 +319,8 @@ const callAI = async (prompt) => {
     }
   }
 
+  const errorDetails = errors.join(" | ");
+  console.error('[AI Service] All Gemini providers exhausted:', errorDetails);
   throw new Error(
     clampText(errors.join(" | "), "All Gemini providers failed")
   );
@@ -320,6 +367,18 @@ User:
    CHAT FUNCTION
 ========================= */
 export const getMentorChatResponse = async ({ userMessage, enrichedContext = '' }) => {
+  // Validate userMessage early
+  if (!userMessage || typeof userMessage !== 'string') {
+    return {
+      reply: "Please share your career goal or what you'd like guidance on.",
+      needsMoreInfo: true,
+      followUpQuestions: [
+        "What role or tech area interests you?",
+        "What's your current skill level?",
+      ],
+    };
+  }
+
   try {
     const aiText = await callAI(buildChatPrompt(userMessage, enrichedContext));
     const parsed = extractJson(aiText);
@@ -355,11 +414,30 @@ export const getMentorChatResponse = async ({ userMessage, enrichedContext = '' 
       followUpQuestions: [],
     };
   } catch (err) {
-    const lowerError = clampText(err?.message).toLowerCase();
+    const errorMsg = clampText(err?.message).toLowerCase();
+    
+    // Check for configuration issues
+    const isConfigError = 
+      errorMsg.includes("no gemini api key") ||
+      errorMsg.includes("api key configured");
+    
+    // Check for quota/rate limit issues
     const isQuotaIssue =
-      lowerError.includes("quota") ||
-      lowerError.includes("resource_exhausted") ||
-      lowerError.includes("429");
+      errorMsg.includes("quota") ||
+      errorMsg.includes("resource_exhausted") ||
+      errorMsg.includes("429") ||
+      errorMsg.includes("too many requests");
+
+    // Log error for debugging
+    console.error('[AI Mentor Error]', err?.message);
+
+    if (isConfigError) {
+      return {
+        reply: "The AI mentor service is temporarily unavailable. Please try again in a few moments.",
+        needsMoreInfo: false,
+        followUpQuestions: [],
+      };
+    }
 
     return {
       reply: isQuotaIssue
@@ -443,6 +521,15 @@ Then return JSON:
    ROADMAP FUNCTION
 ========================= */
 export const generatePersonalizedRoadmap = async ({ userMessage }) => {
+  // Validate userMessage early
+  if (!userMessage || typeof userMessage !== 'string') {
+    return {
+      roadmap: null,
+      explanation: "Please provide a clear description of your career goal.",
+      error: "invalid_input"
+    };
+  }
+
   const cacheKey = crypto
     .createHash("sha256")
     .update(userMessage)
@@ -452,7 +539,10 @@ export const generatePersonalizedRoadmap = async ({ userMessage }) => {
   if (roadmapCache.has(cacheKey)) {
     const entry = roadmapCache.get(cacheKey);
     if (Date.now() - entry.time < CACHE_TTL_MS) {
-      return entry.data;
+      return {
+        ...entry.data,
+        fromCache: true,
+      };
     }
   }
 
@@ -460,11 +550,19 @@ export const generatePersonalizedRoadmap = async ({ userMessage }) => {
     const text = await callAI(buildRoadmapPrompt(userMessage));
     const json = extractJson(text);
 
-    if (!json) throw new Error("Invalid JSON");
+    if (!json) {
+      console.warn('[Roadmap Generation] Failed to extract JSON from AI response');
+      return {
+        roadmap: null,
+        explanation: "Failed to generate roadmap. Try again with more specific details about your goal.",
+        error: "invalid_json"
+      };
+    }
 
     const result = {
       roadmap: json,
       explanation: text,
+      fromCache: false,
     };
 
     roadmapCache.set(cacheKey, {
@@ -474,9 +572,21 @@ export const generatePersonalizedRoadmap = async ({ userMessage }) => {
 
     return result;
   } catch (err) {
+    const errorMsg = clampText(err?.message).toLowerCase();
+    
+    // Check for configuration issues
+    const isConfigError = 
+      errorMsg.includes("no gemini api key") ||
+      errorMsg.includes("api key configured");
+
+    console.error('[Roadmap Generation Error]', err?.message);
+
     return {
       roadmap: null,
-      explanation: "Failed to generate roadmap. Try again.",
+      explanation: isConfigError
+        ? "The roadmap service is temporarily unavailable. Please try again later."
+        : "Failed to generate roadmap. Try again.",
+      error: isConfigError ? "service_unavailable" : "generation_failed"
     };
   }
 };

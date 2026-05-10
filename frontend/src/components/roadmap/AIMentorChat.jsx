@@ -1,6 +1,69 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { aiAPI } from '../../services/api.js';
 import { FiPaperclip, FiSend, FiExternalLink } from 'react-icons/fi';
+import { FaRobot } from 'react-icons/fa';
+
+// Inject global styles for loading animations
+const injectLoadingStyles = () => {
+	const styleId = 'ai-mentor-loading-styles';
+	if (document.getElementById(styleId)) return;
+
+	const style = document.createElement('style');
+	style.id = styleId;
+	style.textContent = `
+		@keyframes dotScale {
+			0%, 100% { transform: scale(0.8); opacity: 0.5; }
+			50% { transform: scale(1.1); opacity: 1; }
+		}
+		@keyframes shimmer {
+			0%, 100% { background-position: 0% center; }
+			50% { background-position: 100% center; }
+		}
+		@keyframes pulse-glow {
+			0%, 100% { 
+				box-shadow: 0 0 10px rgba(34, 211, 238, 0.3), inset 0 0 10px rgba(34, 211, 238, 0.1);
+			}
+			50% { 
+				box-shadow: 0 0 20px rgba(34, 211, 238, 0.6), inset 0 0 20px rgba(34, 211, 238, 0.2);
+			}
+		}
+		@keyframes wave {
+			0%, 100% { transform: translateY(0px); }
+			50% { transform: translateY(-3px); }
+		}
+		@keyframes float-in {
+			0% { opacity: 0; transform: translateY(10px); }
+			100% { opacity: 1; transform: translateY(0); }
+		}
+		.loading-dot {
+			animation: dotScale 1.4s infinite ease-in-out;
+		}
+		.loading-dot:nth-child(1) {
+			animation-delay: 0s;
+		}
+		.loading-dot:nth-child(2) {
+			animation-delay: 0.15s;
+		}
+		.loading-dot:nth-child(3) {
+			animation-delay: 0.3s;
+		}
+		.loading-text {
+			animation: shimmer 2s infinite;
+			background: linear-gradient(90deg, #22d3ee, #06b6d4, #22d3ee);
+			background-size: 200% center;
+		}
+		.loading-wave {
+			animation: wave 1.2s ease-in-out infinite;
+		}
+		.loading-wave:nth-child(1) { animation-delay: 0s; }
+		.loading-wave:nth-child(2) { animation-delay: 0.1s; }
+		.loading-wave:nth-child(3) { animation-delay: 0.2s; }
+		.loading-container {
+			animation: float-in 0.4s ease-out;
+		}
+	`;
+	document.head.appendChild(style);
+};
 
 const defaultMentorContext = {
 	careerGoal: '',
@@ -39,32 +102,52 @@ const unwrapReplyBlob = (value) => {
 	return trimmed;
 };
 
+// Enhanced Loading Animation Component
+const LoadingAnimation = () => {
+	return (
+		<div className="loading-container flex items-center gap-4">
+			{/* Animated dots with wave effect */}
+			<div className="flex gap-2">
+				<span className="loading-wave loading-dot inline-block w-2.5 h-2.5 bg-gradient-to-r from-cyan-400 to-cyan-300 rounded-full shadow-md" />
+				<span className="loading-wave loading-dot inline-block w-2.5 h-2.5 bg-gradient-to-r from-cyan-400 to-cyan-300 rounded-full shadow-md" />
+				<span className="loading-wave loading-dot inline-block w-2.5 h-2.5 bg-gradient-to-r from-cyan-400 to-cyan-300 rounded-full shadow-md" />
+			</div>
+			
+			{/* Dynamic shimmer text with icon */}
+			{/* <div className="flex items-center gap-2">
+				<span className="text-cyan-300 text-lg">✨</span>
+				<span className="loading-text text-xs font-bold  px-2 tracking-wider">Thinking...</span>
+			</div> */}
+		</div>
+	);
+};
+
 const renderMarkdownLine = (text, index) => {
 	if (!text || typeof text !== 'string') return null;
 
 	// Empty lines create spacing
 	if (!text.trim()) {
-		return <div key={index} className="h-2" />;
+		return <div key={index} className="h-3" />;
 	}
 
 	// Heading styles with generous spacing
 	if (text.match(/^### /)) {
 		return (
-			<h3 key={index} className="text-lg font-bold text-cyan-300 mt-4 mb-3 pt-2">
+			<h3 key={index} className="text-base font-bold text-cyan-300 mt-5 mb-3 pt-3 first:mt-0">
 				{renderInlineMarkdown(text.replace(/^### /, ''))}
 			</h3>
 		);
 	}
 	if (text.match(/^## /)) {
 		return (
-			<h2 key={index} className="text-xl font-bold text-cyan-200 mt-5 mb-3 pt-3 border-t border-gray-600">
+			<h2 key={index} className="text-lg font-bold text-cyan-200 mt-6 mb-4 pt-4 border-t border-gray-600/50 first:mt-0 first:pt-0 first:border-t-0">
 				{renderInlineMarkdown(text.replace(/^## /, ''))}
 			</h2>
 		);
 	}
 	if (text.match(/^# /)) {
 		return (
-			<h1 key={index} className="text-2xl font-bold text-white mt-6 mb-4 pt-4 border-t border-gray-500">
+			<h1 key={index} className="text-xl font-bold text-white mt-7 mb-4 pt-4 border-t border-gray-500/50 first:mt-0 first:pt-0 first:border-t-0">
 				{renderInlineMarkdown(text.replace(/^# /, ''))}
 			</h1>
 		);
@@ -73,9 +156,9 @@ const renderMarkdownLine = (text, index) => {
 	// Bullet points with better spacing
 	if (text.match(/^[\s]*[-*+] /)) {
 		return (
-			<div key={index} className="flex gap-3 ml-2 my-1.5">
-				<span className="text-cyan-400 font-bold flex-shrink-0 text-lg">•</span>
-				<p className="text-gray-100 leading-relaxed">{renderInlineMarkdown(text.replace(/^[\s]*[-*+] /, ''))}</p>
+			<div key={index} className="flex gap-3 ml-4 my-2">
+				<span className="text-cyan-400 font-bold flex-shrink-0 text-lg leading-5">•</span>
+				<p className="text-gray-100 leading-relaxed flex-1">{renderInlineMarkdown(text.replace(/^[\s]*[-*+] /, ''))}</p>
 			</div>
 		);
 	}
@@ -85,9 +168,9 @@ const renderMarkdownLine = (text, index) => {
 		const match = text.match(/^([\s]*)(\d+)\. (.*)/);
 		if (match) {
 			return (
-				<div key={index} className="flex gap-3 ml-2 my-1.5">
-					<span className="text-cyan-400 font-bold flex-shrink-0 w-8 text-base">{match[2]}.</span>
-					<p className="text-gray-100 leading-relaxed">{renderInlineMarkdown(match[3])}</p>
+				<div key={index} className="flex gap-3 ml-4 my-2">
+					<span className="text-cyan-400 font-bold flex-shrink-0 w-6 leading-5">{match[2]}.</span>
+					<p className="text-gray-100 leading-relaxed flex-1">{renderInlineMarkdown(match[3])}</p>
 				</div>
 			);
 		}
@@ -96,7 +179,7 @@ const renderMarkdownLine = (text, index) => {
 	// Code block (inline)
 	if (text.match(/^`[^`]/) && text.match(/[^`]`$/)) {
 		return (
-			<div key={index} className="my-3 p-3 bg-gray-900 border border-gray-700 rounded px-4 py-2 text-sm font-mono text-green-400 overflow-x-auto">
+			<div key={index} className="my-3 p-3 bg-gray-900 border border-gray-700 rounded px-4 py-3 text-xs font-mono text-green-400 overflow-x-auto whitespace-pre-wrap break-words">
 				{text.replace(/`/g, '')}
 			</div>
 		);
@@ -105,7 +188,7 @@ const renderMarkdownLine = (text, index) => {
 	// Regular paragraph with good spacing
 	if (text.trim()) {
 		return (
-			<p key={index} className="text-gray-100 leading-relaxed my-1.5">
+			<p key={index} className="text-gray-100 leading-relaxed my-2">
 				{renderInlineMarkdown(text)}
 			</p>
 		);
@@ -226,25 +309,25 @@ const ResourcesCard = ({ url, tags = [] }) => {
 			href={url}
 			target="_blank"
 			rel="noopener noreferrer"
-			className="flex items-start gap-3 p-3 bg-gray-800 border border-cyan-500/30 rounded-lg hover:bg-gray-750 hover:border-cyan-400 transition-all group"
+			className="flex items-start gap-3 p-3 bg-gray-900/50 border border-cyan-500/20 rounded-lg hover:bg-gray-850 hover:border-cyan-400/50 transition-all group duration-200 cursor-pointer"
 		>
-			<div className="flex gap-1 text-lg flex-shrink-0">
+			<div className="flex gap-1 text-lg flex-shrink-0 mt-0.5">
 				<span>{typeIcon}</span>
-				{priceIcon && <span>{priceIcon}</span>}
+				{priceIcon && <span className="text-sm">{priceIcon}</span>}
 			</div>
 			<div className="flex-1 min-w-0">
-				<div className="text-cyan-400 font-medium text-sm truncate group-hover:text-cyan-300 transition-colors">
+				<div className="text-cyan-300 font-semibold text-sm truncate group-hover:text-cyan-200 transition-colors">
 					{displayTitle}
 				</div>
-				<div className="text-gray-400 text-xs truncate">{url}</div>
-				<div className="flex gap-2 mt-2 flex-wrap">
-					{isLearning && <span className="text-xs bg-blue-500/30 text-blue-300 px-2 py-0.5 rounded">Learning</span>}
-					{isPractice && <span className="text-xs bg-green-500/30 text-green-300 px-2 py-0.5 rounded">Practice</span>}
-					{isFree && <span className="text-xs bg-emerald-500/30 text-emerald-300 px-2 py-0.5 rounded">Free</span>}
-					{isPaid && <span className="text-xs bg-amber-500/30 text-amber-300 px-2 py-0.5 rounded">Paid</span>}
+				<div className="text-gray-500 text-xs truncate mt-1 group-hover:text-gray-400 transition-colors">{url}</div>
+				<div className="flex gap-1.5 mt-2 flex-wrap">
+					{isLearning && <span className="text-[10px] bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded">Learning</span>}
+					{isPractice && <span className="text-[10px] bg-green-500/20 text-green-300 px-2 py-0.5 rounded">Practice</span>}
+					{isFree && <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded">Free</span>}
+					{isPaid && <span className="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded">Paid</span>}
 				</div>
 			</div>
-			<FiExternalLink className="w-4 h-4 text-cyan-400 flex-shrink-0 group-hover:translate-x-1 transition-transform" />
+			<FiExternalLink className="w-4 h-4 text-cyan-400 flex-shrink-0 group-hover:translate-x-1 transition-transform mt-0.5" />
 		</a>
 	);
 };
@@ -295,17 +378,18 @@ const ResourcesSection = ({ resources }) => {
 	const paid = resources.filter(r => r.tags.includes('Paid'));
 	
 	return (
-		<div className="space-y-5">
-			<div className="text-sm font-semibold text-cyan-300 flex items-center gap-2 mb-4">
-				📚 Learning & Practice Resources
+		<div className="space-y-4">
+			<div className="text-sm font-semibold text-cyan-300 flex items-center gap-2 mb-4 pb-2 border-b border-gray-600/50">
+				📚 Learning Resources
 			</div>
 			
 			{learning.length > 0 && (
 				<div className="space-y-3">
-					<div className="text-xs font-medium text-blue-300 mb-3 flex items-center gap-1.5">
-						📖 Learning Resources
+					<div className="text-xs font-semibold text-blue-300 mb-3 flex items-center gap-2">
+						<span className="w-1.5 h-1.5 bg-blue-400 rounded-full" />
+						Learning Materials
 					</div>
-					<div className="space-y-3 ml-1">
+					<div className="space-y-2">
 						{learning.map((resource, idx) => (
 							<ResourcesCard key={`learn-${idx}`} url={resource.url} tags={resource.tags} />
 						))}
@@ -315,10 +399,11 @@ const ResourcesSection = ({ resources }) => {
 			
 			{practicing.length > 0 && (
 				<div className="space-y-3">
-					<div className="text-xs font-medium text-green-300 mb-3 flex items-center gap-1.5">
-						🎯 Practice Resources
+					<div className="text-xs font-semibold text-green-300 mb-3 flex items-center gap-2">
+						<span className="w-1.5 h-1.5 bg-green-400 rounded-full" />
+						Practice Platforms
 					</div>
-					<div className="space-y-3 ml-1">
+					<div className="space-y-2">
 						{practicing.map((resource, idx) => (
 							<ResourcesCard key={`prac-${idx}`} url={resource.url} tags={resource.tags} />
 						))}
@@ -326,11 +411,11 @@ const ResourcesSection = ({ resources }) => {
 				</div>
 			)}
 			
-			{free.length > 0 && paid.length > 0 && (
-				<div className="text-xs text-gray-400 flex items-center gap-3 pt-3 border-t border-gray-600 mt-4">
-					<span>✨ {free.length} free</span>
-					<span>•</span>
-					<span>💳 {paid.length} paid option</span>
+			{resources.length > 0 && (
+				<div className="text-xs text-gray-400 flex items-center gap-3 pt-3 border-t border-gray-600/30 mt-4">
+					{free.length > 0 && <span>✨ {free.length} Free</span>}
+					{free.length > 0 && paid.length > 0 && <span>•</span>}
+					{paid.length > 0 && <span>💳 {paid.length} Paid</span>}
 				</div>
 			)}
 		</div>
@@ -346,13 +431,13 @@ const MessageContent = ({ text, role }) => {
 	const lines = text.split('\n');
 	
 	return (
-		<div className="space-y-3">
-			<div className="space-y-2">
+		<div className="space-y-4">
+			<div className="space-y-3 leading-relaxed text-sm">
 				{lines.map((line, index) => renderMarkdownLine(line, index)).filter(Boolean)}
 			</div>
 			
 			{resources && (
-				<div className="mt-4 pt-4 border-t border-gray-600">
+				<div className="mt-5 pt-5 border-t border-gray-600/50">
 					<ResourcesSection resources={resources} />
 				</div>
 			)}
@@ -405,6 +490,11 @@ const AIMentorChat = ({ token, onRoadmapGenerated, seedConversation, conversatio
 	const messagesRef = useRef(null);
 
 	const hasUserMessages = useMemo(() => messages.some((m) => m.role === 'user'), [messages]);
+
+	// Inject loading styles on mount
+	useEffect(() => {
+		injectLoadingStyles();
+	}, []);
 
 	useEffect(() => {
 		if (messagesRef.current) {
@@ -546,77 +636,75 @@ const AIMentorChat = ({ token, onRoadmapGenerated, seedConversation, conversatio
 				</button>
 			</div>
 
-<div ref={messagesRef} className="flex-1 overflow-y-auto bg-gray-900/70 rounded-lg p-5 border border-gray-700 space-y-5 scroll-smooth">
-			{messages.map((message, index) =>
-				message.role === 'assistant' ? (
-					<div key={`assistant-${index}`} className="flex items-start gap-4 animate-fadeIn">
-						<div className="w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-600 to-blue-600 flex items-center justify-center text-white font-bold flex-shrink-0 shadow-lg">🤖</div>
-						<div className="bg-gray-800 border border-gray-600 text-gray-100 px-5 py-4 rounded-xl max-w-[75%] text-sm shadow-lg hover:border-cyan-500/50 transition-colors">
-							<MessageContent text={message.content} role="assistant" />
-						</div>
-					</div>
-				) : (
-					<div key={`user-${index}`} className="flex items-start gap-4 justify-end">
-						<div className="max-w-[75%] bg-gradient-to-br from-blue-600 to-blue-700 text-white px-5 py-4 rounded-xl text-sm shadow-lg">{message.content}</div>
-						<div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-xs text-white font-bold flex-shrink-0 shadow-lg">👤</div>
-					</div>
-				)
-			)}
-
-			{isChatting && (
-				<div className="flex items-start gap-4 animate-fadeIn">
-					<div className="w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-600 to-blue-600 flex items-center justify-center text-white font-bold flex-shrink-0 shadow-lg">🤖</div>
-					<div className="bg-gray-800 border border-gray-600 text-gray-100 px-5 py-4 rounded-xl max-w-[50%] text-sm">
-						<div className="flex items-center gap-3">
-								<span className="inline-block w-2 h-2 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: '0s' }} />
-								<span className="inline-block w-2 h-2 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: '0.12s' }} />
-								<span className="inline-block w-2 h-2 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: '0.24s' }} />
+			<div ref={messagesRef} className="flex-1 overflow-y-auto bg-gray-900/70 rounded-lg p-5 border border-gray-700 space-y-5 scroll-smooth">
+				{messages.map((message, index) =>
+					message.role === 'assistant' ? (
+						<div key={`assistant-${index}`} className="flex items-start gap-4 animate-fadeIn group">
+							<div className="w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-600 to-blue-600 flex items-center justify-center text-white font-bold flex-shrink-0 shadow-lg"><FaRobot size={20} /></div>
+							<div className="bg-gray-800/80 border border-gray-600 text-gray-100 px-6 py-5 rounded-xl flex-1 max-w-4xl text-sm shadow-lg hover:border-cyan-500/50 transition-colors break-words overflow-hidden">
+								<MessageContent text={message.content} role="assistant" />
 							</div>
 						</div>
+					) : (
+						<div key={`user-${index}`} className="flex items-start gap-4 justify-end">
+							<div className="max-w-xl bg-gradient-to-br from-blue-600 to-blue-700 text-white px-6 py-4 rounded-xl text-sm shadow-lg break-words">{message.content}</div>
+							<div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-xs text-white font-bold flex-shrink-0 shadow-lg">👤</div>
+						</div>
+					)
+				)}
+
+				{isChatting && (
+					<div className="flex items-start gap-4 animate-fadeIn">
+						<div className="w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-600 to-blue-600 flex items-center justify-center text-white font-bold flex-shrink-0 shadow-lg animate-pulse"><FaRobot size={20} /></div>
+					<div className="bg-gray-800/80 border border-cyan-500/50 text-gray-100 px-6 py-5 rounded-xl text-sm shadow-lg hover:border-cyan-400 transition-all duration-300" style={{
+						boxShadow: '0 0 25px rgba(34, 211, 238, 0.25), inset 0 0 15px rgba(34, 211, 238, 0.1), 0 0 40px rgba(6, 182, 212, 0.1)'
+					}}>
+						<LoadingAnimation />
+					</div>
 					</div>
 				)}
 			</div>
 
-<div className={`mt-5 flex items-center gap-3 ${!hasUserMessages ? 'justify-center' : ''}`}>
-			<div className={`${hasUserMessages ? 'flex-1' : 'w-3/4'} relative`}>
-				<textarea
-					value={input}
-					onChange={(event) => setInput(event.target.value)}
-					onKeyDown={(event) => {
-						if (event.key === 'Enter' && !event.shiftKey) {
-							event.preventDefault();
-							handleSend();
-						}
-					}}
-					placeholder="Type your goal, interests, and availability... (Shift+Enter for newline)"
-					className="w-full resize-none bg-gray-900 text-white rounded-full px-5 py-3 pr-12 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-					disabled={isChatting || isGenerating}
-				/>
-				<button className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-300 transition-colors" aria-hidden>
-					<FiPaperclip />
+			<div className={`mt-5 flex items-center gap-3 ${!hasUserMessages ? 'justify-center' : ''}`}>
+				<div className={`${hasUserMessages ? 'flex-1' : 'w-3/4'} relative`}>
+					<textarea
+						value={input}
+						onChange={(event) => setInput(event.target.value)}
+						onKeyDown={(event) => {
+							if (event.key === 'Enter' && !event.shiftKey) {
+								event.preventDefault();
+								handleSend();
+							}
+						}}
+						placeholder="Type your goal, interests, and availability... (Shift+Enter for newline)"
+						className="w-full resize-none bg-gray-900 text-white rounded-full px-5 py-3 pr-12 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+						disabled={isChatting || isGenerating}
+					/>
+					<button className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-300 transition-colors" aria-hidden>
+						<FiPaperclip />
+					</button>
+				</div>
+
+				<button
+					onClick={handleSend}
+					disabled={!input.trim() || isChatting || isGenerating}
+					className="p-3 bg-cyan-500 hover:bg-cyan-600 disabled:bg-cyan-800 disabled:opacity-60 text-white rounded-full transition-colors shadow-lg hover:shadow-cyan-500/50"
+				>
+					{isChatting ? '...' : <FiSend />}
 				</button>
 			</div>
 
-			<button
-				onClick={handleSend}
-				disabled={!input.trim() || isChatting || isGenerating}
-				className="p-3 bg-cyan-500 hover:bg-cyan-600 disabled:bg-cyan-800 disabled:opacity-60 text-white rounded-full transition-colors shadow-lg hover:shadow-cyan-500/50"
-			>
-				{isChatting ? '...' : <FiSend />}
-			</button>
-		</div>
+			<div className="mt-5 pt-4 border-t border-gray-600 text-xs text-gray-400 space-y-2">
+				<div className="flex items-center gap-3 flex-wrap">
+					<span className="font-medium text-gray-300">Context:</span>
+					<span className="px-2 py-1 bg-gray-700/50 rounded">{mentorContext.careerGoal ? '✓ Goal' : '○ Goal'}</span>
+					<span className="px-2 py-1 bg-gray-700/50 rounded">{mentorContext.skillLevel && mentorContext.skillLevel !== 'Unknown' ? '✓ Level' : '○ Level'}</span>
+					<span className="px-2 py-1 bg-gray-700/50 rounded">{mentorContext.interests?.length ? '✓ Interests' : '○ Interests'}</span>
+					<span className="px-2 py-1 bg-gray-700/50 rounded">{mentorContext.timeAvailability ? '✓ Time' : '○ Time'}</span>
+				</div>
 
-		<div className="mt-5 pt-4 border-t border-gray-600 text-xs text-gray-400 space-y-2">
-			<div className="flex items-center gap-3 flex-wrap">
-				<span className="font-medium text-gray-300">Context:</span>
-				<span className="px-2 py-1 bg-gray-700/50 rounded">{mentorContext.careerGoal ? '✓ Goal' : '○ Goal'}</span>
-				<span className="px-2 py-1 bg-gray-700/50 rounded">{mentorContext.skillLevel && mentorContext.skillLevel !== 'Unknown' ? '✓ Level' : '○ Level'}</span>
-				<span className="px-2 py-1 bg-gray-700/50 rounded">{mentorContext.interests?.length ? '✓ Interests' : '○ Interests'}</span>
-				<span className="px-2 py-1 bg-gray-700/50 rounded">{mentorContext.timeAvailability ? '✓ Time' : '○ Time'}</span>
+				{error && <p className="mt-3 text-sm text-red-400">{error}</p>}
 			</div>
-			</div>
-
-			{error && <p className="mt-3 text-sm text-red-400">{error}</p>}
 		</div>
 	);
 };
