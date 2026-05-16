@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext.jsx';
 import { useRoadmap } from '../contexts/RoadmapContext.jsx';
 import TaskItem from '../components/roadmap/TaskItem.jsx';
 import RoadmapFlow from '../components/roadmap/RoadmapFlow.jsx';
+import { ProfilePageSkeleton } from '../components/SkeletonLoaders/ProfilePageSkeleton.jsx';
 import {
   MapPin,
   Calendar,
@@ -132,6 +133,16 @@ const ProfileRoadmapPage = () => {
   const displayLocation = user?.location || null;
   const displayTrack = currentTrack || 'Track not selected yet';
 
+  // Show skeleton while loading OR if user exists but user roadmap not yet loaded
+  if (isLoading) {
+    return <ProfilePageSkeleton />;
+  }
+
+  // Show skeleton if user is authenticated but roadmap data is still null
+  if (user && !userRoadmap) {
+    return <ProfilePageSkeleton />;
+  }
+
   if (!user && !isLoading) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center text-white">
@@ -143,13 +154,12 @@ const ProfileRoadmapPage = () => {
     );
   }
 
+  if (!user) {
+    return <ProfilePageSkeleton />;
+  }
+
   return (
     <div className="min-h-screen bg-gray-900 text-white">
-      {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-900/80 z-10">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent" />
-        </div>
-      )}
 
       {/* Header */}
       <div className="bg-gray-800 border-b border-gray-700">

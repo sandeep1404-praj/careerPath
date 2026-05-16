@@ -252,6 +252,27 @@ export const roadmapAPI = {
     });
   },
 
+  // Track recently opened roadmap
+  trackRecentlyOpened: async (token, roadmapId, roadmapName) => {
+    return apiRequest('/roadmaps/user/recently-opened', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ roadmapId, roadmapName }),
+    });
+  },
+
+  // Get recently opened roadmaps
+  getRecentlyOpened: async (token) => {
+    return apiRequest('/roadmaps/user/recently-opened', {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  },
+
   // Legacy roadmap functions (for backward compatibility)
   getAllRoadmaps: async () => {
     return apiRequest('/roadmaps', {

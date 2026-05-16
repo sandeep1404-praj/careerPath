@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { DashboardSkeleton } from "../components/SkeletonLoaders/DashboardSkeleton.jsx";
 
 export default function Dashboard() {
   const [roadmaps, setRoadmaps] = useState([]);
@@ -26,7 +27,7 @@ export default function Dashboard() {
     fetchRoadmaps();
   }, []);
 
-  if (loading) return <p className="p-8">Loading roadmaps...</p>;
+  if (loading) return <DashboardSkeleton />;
   if (error) return <p className="p-8 text-red-500">Error: {error}</p>;
 
   return (

@@ -2,9 +2,12 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { useRoadmap } from '../contexts/RoadmapContext.jsx';
+import { roadmapAPI } from '../services/api.js';
 import StaticRoadmapCard from './roadmap/StaticRoadmapCard.jsx';
 import CustomTaskForm from './roadmap/CustomTaskForm.jsx';
 import RoadmapFlow from './roadmap/RoadmapFlow.jsx';
+import { RoadmapListSkeleton } from './SkeletonLoaders/RoadmapCardSkeleton.jsx';
+import { DetailRoadmapSkeleton } from './SkeletonLoaders/DetailRoadmapSkeleton.jsx';
 
 import {
   FaPalette, FaCog, FaSyncAlt, FaMobileAlt, FaWrench, FaChartBar, FaRobot,
@@ -12,7 +15,7 @@ import {
 } from 'react-icons/fa';
 
 function RoadmapPage() {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const {
     loading,
     error,
@@ -53,6 +56,21 @@ function RoadmapPage() {
       : null,
     [detailId, staticRoadmaps]
   );
+
+  // Track recently opened roadmap when detail view is opened
+  useEffect(() => {
+    if (detailId && detailRoadmap && user && token) {
+      try {
+        const roadmapId = detailRoadmap.id || detailRoadmap._id;
+        const roadmapName = detailRoadmap.name;
+        roadmapAPI.trackRecentlyOpened(token, roadmapId, roadmapName).catch(err => {
+          console.warn('Failed to track recently opened roadmap:', err);
+        });
+      } catch (error) {
+        console.warn('Error tracking recently opened roadmap:', error);
+      }
+    }
+  }, [detailId, detailRoadmap, user, token]);
 
   const filteredRoadmaps = useMemo(() => {
     if (detailId) return [];
@@ -107,10 +125,15 @@ function RoadmapPage() {
     return (
       <div className="min-h-screen bg-gray-900 p-4">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-            <p className="text-gray-400">Loading roadmaps...</p>
+          {/* Header loading skeleton */}
+          <div className="mb-8 space-y-4">
+            <div className="h-10 bg-gray-800 rounded w-1/4 animate-pulse"></div>
+            <div className="h-6 bg-gray-800 rounded w-1/3 animate-pulse"></div>
           </div>
+          {/* Filter/search skeleton */}
+          <div className="mb-6 h-10 bg-gray-800 rounded w-1/2 animate-pulse"></div>
+          {/* Roadmaps grid skeleton */}
+          <RoadmapListSkeleton count={9} />
         </div>
       </div>
     );
@@ -139,14 +162,7 @@ function RoadmapPage() {
   // Detail view rendering
   if (detailId) {
     if (loading && !detailRoadmap) {
-      return (
-        <div className="min-h-screen bg-gray-900 p-8 flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-            <p className="text-gray-400">Loading roadmap...</p>
-          </div>
-        </div>
-      );
+      return <DetailRoadmapSkeleton />;
     }
 
     if (!detailRoadmap) {
@@ -443,14 +459,18 @@ function RoadmapPage() {
 
           {filteredRoadmaps.length > 0 ? (
             <>
-              <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
-                {filteredRoadmaps.map((roadmap) => (
-                  <StaticRoadmapCard
-                    key={roadmap.id}
-                    roadmap={roadmap}
-                  />
-                ))}
-              </div>
+              {loading ? (
+                <RoadmapListSkeleton count={9} />
+              ) : (
+                <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
+                  {filteredRoadmaps.map((roadmap) => (
+                    <StaticRoadmapCard
+                      key={roadmap.id}
+                      roadmap={roadmap}
+                    />
+                  ))}
+                </div>
+              )}
 
               {/* Pagination Controls */}
               {pagination && pagination.totalPages > 1 && (

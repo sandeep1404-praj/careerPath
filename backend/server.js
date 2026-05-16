@@ -6,6 +6,7 @@ import compression from 'compression';
 import helmet from 'helmet';
 
 import connectDB from './config/db.js';
+import { initRedis } from './config/redis.js';
 import authRoutes from './routes/auth.js';
 import roadmapRoutes from "./routes/roadmap.js";
 import tasksRoutes from './routes/tasks.js';
@@ -76,6 +77,9 @@ app.use((req, res, next) => {
 
 // Connect MongoDB
 connectDB();
+
+// Initialize Redis for caching
+initRedis();
 
 // Health check endpoint for Render
 app.get('/health', (req, res) => {

@@ -1,6 +1,15 @@
 import StaticRoadmap from "../models/StaticRoadmap.js";
 import UserRoadmap from "../models/UserRoadmap.js";
 import { AppError, asyncHandler } from '../middleware/errorHandler.js';
+import {
+  getCachedRoadmapsList,
+  cacheRoadmapsList,
+  getCachedRoadmap,
+  cacheRoadmap,
+  addRecentlyOpened,
+  getRecentlyOpened,
+  isRedisReady
+} from '../config/redis.js';
 
 // Get all static roadmaps
 export const getStaticRoadmaps = asyncHandler(async (req, res, next) => {
@@ -13,6 +22,15 @@ export const getStaticRoadmaps = asyncHandler(async (req, res, next) => {
   // Get pagination parameters from query
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
+
+  // Try to get from Redis cache first
+  if (isRedisReady()) {
+    const cached = await getCachedRoadmapsList(page, limit);
+    if (cached) {
+      return res.json(cached);
+    }
+  }
+
   const skip = (page - 1) * limit;
 
   // Get total count for pagination metadata
@@ -26,22 +44,39 @@ export const getStaticRoadmaps = asyncHandler(async (req, res, next) => {
     .limit(limit)
     .lean();
 
-  res.json({
+  const paginationData = {
+    currentPage: page,
+    totalPages,
+    totalCount,
+    limit,
+    hasNextPage: page < totalPages,
+    hasPrevPage: page > 1
+  };
+
+  const responseData = {
     roadmaps,
-    pagination: {
-      currentPage: page,
-      totalPages,
-      totalCount,
-      limit,
-      hasNextPage: page < totalPages,
-      hasPrevPage: page > 1
-    }
-  });
+    pagination: paginationData
+  };
+
+  // Cache the result
+  if (isRedisReady()) {
+    await cacheRoadmapsList(page, limit, roadmaps, paginationData);
+  }
+
+  res.json(responseData);
 });
 
 // Get a specific static roadmap by ID or track
 export const getStaticRoadmap = asyncHandler(async (req, res, next) => {
   const { id } = req.params;
+  
+  // Try to get from Redis cache first
+  if (isRedisReady()) {
+    const cached = await getCachedRoadmap(id);
+    if (cached) {
+      return res.json(cached);
+    }
+  }
   
   // Try to find by ID first, then by track name
   let roadmap = await StaticRoadmap.findOne({ id });
@@ -51,6 +86,11 @@ export const getStaticRoadmap = asyncHandler(async (req, res, next) => {
   
   if (!roadmap) {
     throw new AppError('Roadmap not found', 404);
+  }
+  
+  // Cache the roadmap
+  if (isRedisReady()) {
+    await cacheRoadmap(roadmap.id || roadmap._id, roadmap);
   }
   
   res.json(roadmap);
@@ -537,3 +577,45 @@ export const deleteRoadmapFromUser = async (req, res) => {
     });
   }
 };
+
+// Track recently opened roadmaps
+export const trackRecentlyOpened = asyncHandler(async (req, res, next) => {
+  const userId = req.user?._id || req.user?.id;
+  const { roadmapId, roadmapName } = req.body;
+
+  if (!userId) {
+    throw new AppError('User authentication failed', 401);
+  }
+
+  if (!roadmapId || !roadmapName) {
+    throw new AppError('Roadmap ID and name are required', 400);
+  }
+
+  // Add to recently opened in Redis
+  if (isRedisReady()) {
+    await addRecentlyOpened(userId, roadmapId, roadmapName);
+  }
+
+  res.json({ message: 'Roadmap tracked as recently opened' });
+});
+
+// Get recently opened roadmaps for user
+export const getRecentlyOpenedRoadmaps = asyncHandler(async (req, res, next) => {
+  const userId = req.user?._id || req.user?.id;
+
+  if (!userId) {
+    throw new AppError('User authentication failed', 401);
+  }
+
+  let recentRoadmaps = [];
+
+  // Get from Redis cache
+  if (isRedisReady()) {
+    recentRoadmaps = await getRecentlyOpened(userId);
+  }
+
+  res.json({ 
+    recentRoadmaps,
+    count: recentRoadmaps.length 
+  });
+});

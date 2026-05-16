@@ -9,7 +9,9 @@ import {
   addRoadmapToUser,
   deleteRoadmapFromUser,
   updateUserRoadmap,
-  updateUserPreferences
+  updateUserPreferences,
+  trackRecentlyOpened,
+  getRecentlyOpenedRoadmaps
 } from "../controllers/roadmapController.js";
 
 const router = express.Router();
@@ -114,6 +116,12 @@ router.patch("/user/update", authenticateToken, updateUserRoadmap);
 
 // Update user preferences (protected)
 router.patch("/user/preferences", authenticateToken, updateUserPreferences);
+
+// Track recently opened roadmap (protected)
+router.post("/user/recently-opened", authenticateToken, trackRecentlyOpened);
+
+// Get recently opened roadmaps (protected)
+router.get("/user/recently-opened", authenticateToken, getRecentlyOpenedRoadmaps);
 
 // Legacy routes for backward compatibility (THESE MUST BE LAST)
 // Get all legacy roadmaps
