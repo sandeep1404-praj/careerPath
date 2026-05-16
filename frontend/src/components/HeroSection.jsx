@@ -118,8 +118,12 @@ export function HeroSection() {
             Personalized roadmaps, mentorship & AI-powered chatbots to lead your way.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
-            <Button size="lg">Get Started</Button>
-            <Button variant="outline" size="lg">Explore Your Path</Button>
+            <a href="/roadmaps">
+              <Button size="lg">Get Started</Button>
+            </a>
+            <a href="/roadmaps">
+              <Button variant="outline" size="lg">Explore Your Path</Button>
+            </a>
           </div>
         </div>
 

@@ -50,7 +50,7 @@ For testing without email verification:
    ```
 
 4. **Test the connection:**
-   - Visit: `https://careerpath-54sr.onrender.com/api/health`
+   - Visit: `http://localhost:5000/api/health`
    - Should return: `{"status":"OK","message":"Server is running"}`
 
 ### Gmail Setup (Optional)
@@ -133,7 +133,7 @@ Import the file:
 - `AI_Mentor_API.postman_collection.json`
 
 Set Postman variables before running:
-- `baseUrl` → `https://careerpath-54sr.onrender.com`
+- `baseUrl` → `http://localhost:5000`
 - `token` → your JWT token
 
 ### Troubleshooting

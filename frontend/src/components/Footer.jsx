@@ -10,7 +10,7 @@ const Footer = () => {
     ],
     resources: [
       { name: "Blog", href: "#" },
-      { name: "Success Stories", href: "#" },
+      { name: "Success Stories - comming soon", href: "#" },
       { name: "Career Guides", href: "#" },
       { name: "Interview Prep", href: "#" }
     ],
@@ -42,7 +42,7 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 mb-12">
           {/* Brand Section */}
           <div className="lg:col-span-2">
-            <h3 className="text-2xl font-bold mb-4">CareerGPS</h3>
+            <h3 className="text-2xl font-bold mb-4">CareerPath</h3>
             <p className="text-gray-300 mb-6 max-w-md">
               Empowering students across India with personalized career guidance, AI-powered mentorship, and structured learning paths to achieve their dreams.
             </p>
@@ -51,16 +51,16 @@ const Footer = () => {
             <div className="space-y-3">
               <div className="flex items-center gap-3 text-gray-300">
                 <MapPin className="w-5 h-5" />
-                <span>Bangalore, India</span>
+                <span>Maharastra, India</span>
               </div>
               <div className="flex items-center gap-3 text-gray-300">
                 <Mail className="w-5 h-5" />
-                <span>support@careergps.com</span>
+                <span>contactsandeep@gmail.com</span>
               </div>
-              <div className="flex items-center gap-3 text-gray-300">
+              {/* <div className="flex items-center gap-3 text-gray-300">
                 <Phone className="w-5 h-5" />
                 <span>+91 9876543210</span>
-              </div>
+              </div> */}
             </div>
           </div>
 
@@ -122,7 +122,7 @@ const Footer = () => {
         <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center">
           {/* Copyright */}
           <p className="text-gray-400 text-sm mb-4 md:mb-0">
-            © 2024 CareerGPS. All rights reserved.
+            © 2024 CareerPath. All rights reserved.
           </p>
 
           {/* Social Links */}

@@ -14,19 +14,6 @@ const StaticRoadmapCard = ({ roadmap, className = '' }) => {
   // Filter tasks by selected category
   // Removed inline tasks/graph; navigation pattern instead
 
-  const getTrackIcon = (track) => {
-    const trackLower = track?.toLowerCase() || '';
-    if (trackLower.includes('frontend')) return '🎨';
-    if (trackLower.includes('backend')) return '⚙️';
-    if (trackLower.includes('fullstack') || trackLower.includes('full-stack')) return '🔄';
-    if (trackLower.includes('mobile')) return '📱';
-    if (trackLower.includes('devops')) return '🔧';
-    if (trackLower.includes('data')) return '📊';
-    if (trackLower.includes('ai') || trackLower.includes('ml')) return '🤖';
-    if (trackLower.includes('security')) return '🔒';
-    return '💻';
-  };
-
   const handleCardClick = () => {
     const id = roadmap.id || roadmap._id;
     navigate(`/roadmap/${id}`);

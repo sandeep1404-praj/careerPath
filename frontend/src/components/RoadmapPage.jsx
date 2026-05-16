@@ -277,7 +277,7 @@ function RoadmapPage() {
                         )}
                       </div>
                       <div className="mt-auto pt-2 flex items-center justify-between">
-                        <span className="text-xs text-gray-500">Order: {task.order || '-'}</span>
+                        {/* <span className="text-xs text-gray-500">Order: {task.order || '-'}</span> */}
                         <button
                           disabled={already}
                           onClick={async () => {

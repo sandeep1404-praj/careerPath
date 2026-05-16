@@ -7,7 +7,7 @@
   "variable": [
     {
       "key": "base_url",
-      "value": "https://careerpath-54sr.onrender.com",
+      "value": "http://localhost:5000",
       "type": "string"
     },
     {
