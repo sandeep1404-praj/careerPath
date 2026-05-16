@@ -417,7 +417,7 @@ function RoadmapPage() {
         )}
 
         {/* Notice directing user to Profile for personal roadmap */}
-        {user && (
+        {/* {user && (
           <div className="mb-8 bg-purple-900/20 border border-purple-700 rounded-lg p-6">
             <h2 className="text-xl font-semibold text-purple-300 mb-2">Your Personal Roadmap Has Moved</h2>
             <p className="text-gray-300 mb-4">Manage your added tasks, update statuses, notes, and progress in your profile page now.</p>
@@ -428,7 +428,7 @@ function RoadmapPage() {
               Go to Profile
             </a>
           </div>
-        )}
+        )} */}
 
         {/* Static roadmaps */}
         <div className="space-y-8">
@@ -436,9 +436,9 @@ function RoadmapPage() {
             <h2 className="text-2xl font-bold text-white">
               Available Roadmaps
             </h2>
-            <span className="text-gray-400">
+            {/* <span className="text-gray-400">
               {filteredRoadmaps.length} roadmap{filteredRoadmaps.length !== 1 ? 's' : ''} found
-            </span>
+            </span> */}
           </div>
 
           {filteredRoadmaps.length > 0 ? (

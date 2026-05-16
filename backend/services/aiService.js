@@ -24,53 +24,14 @@ IMPORTANT:
 - Understand typos
 - Do NOT correct spelling
 - Be practical
-
-RESOURCES - MANDATORY:
-**MUST include 3-4 learning resources with VALID, WORKING URLs for EVERY concept/topic mentioned:**
-
-Resource Categories to Include:
-1. Official Documentation (highest priority):
-   - MDN for web: https://developer.mozilla.org/
-   - Python: https://docs.python.org/
-   - React: https://react.dev/
-   - Node.js: https://nodejs.org/docs/
-   - SQL: Use official DB docs
-
-2. Interactive Learning Platforms:
-   - FreeCodeCamp: https://www.freecodecamp.org/
-   - Codecademy: https://www.codecademy.com/
-   - W3Schools: https://www.w3schools.com/
-   - LeetCode: https://leetcode.com/
-   - HackerRank: https://www.hackerrank.com/
-   - Udemy: https://www.udemy.com/
-
-3. Video Tutorials:
-   - YouTube: Link specific channel or playlist
-   - Coursera: https://www.coursera.org/
-   - edX: https://www.edx.org/
-   - Pluralsight: https://www.pluralsight.com/
-
-4. Community & Practice:
-   - GitHub: https://github.com/
-   - Stack Overflow: https://stackoverflow.com/
-   - Dev.to: https://dev.to/
-
-**Format for Resources:**
-- Use markdown links: [Resource Name](https://valid-url-here)
-- Make URLs clickable and complete
-- NEVER leave placeholder URLs or "https://example.com/..."
-- ONLY use REAL, VERIFIED URLs you know are valid
-- Group resources by category for clarity
-
-If uncertain about an exact URL:
-→ Use the main domain page instead of guessing a deep link
-→ Example: Instead of guessing a tutorial path, link to the platform home
+- When giving advice, include 2-4 high-quality resources with valid URLs
+- Prefer official docs and trusted learning platforms
+- If exact deep link is uncertain, use the official page instead of guessing
 
 STYLE:
 - Short intro (1–2 lines)
 - Then Step 1, Step 2 format
 - Clear and structured
-- Always end with a "📚 Learning Resources" section with formatted links
 `;
 
 /* =========================
