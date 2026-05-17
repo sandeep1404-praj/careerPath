@@ -25,121 +25,127 @@ const setEmailTimeout = (req, res, next) => {
   next();
 };
 
-// Signup with OTP verification
+// Step 1: Signup - User enters name, email, password and receives OTP
 router.post('/signup', setSignupTimeout, async (req, res) => {
   const { name, email, password } = req.body;
+  
   try {
+    // Validate input
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: 'Name, email, and password are required' });
+    }
+
+    // Check if user already exists
     const existingUser = await User.findOne({ email });
-    if (existingUser) return res.status(400).json({ message: 'User already exists' });
+    if (existingUser) {
+      return res.status(400).json({ message: 'User already exists with this email' });
+    }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Generate OTP
+    // Generate OTP (6-digit code valid for 3 minutes)
     const otp = generateOTP();
-    const otpExpiry = new Date(Date.now() + 3 * 60 * 1000); // 3 minutes
+    const otpExpiry = new Date(Date.now() + 3 * 60 * 1000);
 
-    // Remove any previous pending signup OTP and store fresh pending signup data.
+    // Delete any previous OTP for this email
     await OTP.deleteMany({ email, purpose: 'signup' });
 
-    // Save OTP with pending signup details (user record is created only after OTP verification)
+    // Store OTP with user details (temporary storage)
     await OTP.create({
       email,
       otp,
       expiry: otpExpiry,
       purpose: 'signup',
       signupName: name,
-      signupPasswordHash: hashedPassword
+      signupPassword: password // Store plain password temporarily
     });
 
     // Send OTP email
-    // Check if email configuration is complete
-    const emailConfigured = process.env.EMAIL_USER && process.env.EMAIL_PASSWORD;
-    
-    let emailSent = false;
-    if (!emailConfigured) {
-      console.warn('⚠️ Email configuration incomplete - EMAIL_USER or EMAIL_PASSWORD missing');
-      // In development, allow signup without email. In production, must have email config
-      if (process.env.NODE_ENV === 'production') {
-        await OTP.deleteMany({ email, purpose: 'signup' });
-        return res.status(500).json({ 
-          message: 'Server email configuration error. Please contact support.',
-          error: 'EMAIL_CONFIG_MISSING'
-        });
-      }
-    } else {
-      // Email is configured, attempt to send
-      try {
-        emailSent = await sendOtpEmail(email, otp);
-      } catch (emailError) {
-        console.error('Exception during OTP send:', emailError.message);
-        emailSent = false;
-      }
-    }
+    const emailSent = await sendOtpEmail(email, otp);
 
-    // If email sending failed (and was configured), return error
-    if (!emailSent && emailConfigured) {
+    if (!emailSent) {
+      // Clean up OTP if email fails
       await OTP.deleteMany({ email, purpose: 'signup' });
-      console.error('Signup OTP email failed for:', email, '- check Gmail App Password or connection issues');
       return res.status(500).json({ 
-        message: 'Failed to send OTP email. Please verify your email address and try again. If problem persists, contact support.',
+        message: 'Failed to send OTP. Please check your email address and try again.',
         error: 'EMAIL_SEND_FAILED'
       });
     }
 
-    console.log('✅ Signup successful for:', email, '- OTP sent');
     res.status(201).json({ 
-      message: 'Signup successful. OTP sent to your email for verification.',
+      message: 'Signup initiated. OTP sent to your email. Please verify within 3 minutes.',
       email,
-      // For testing without email configuration
-      ...(process.env.NODE_ENV === 'development' && !process.env.EMAIL_USER && { otp })
+      // For development/testing only (return OTP for testing without email)
+      ...(process.env.NODE_ENV === 'development' && { otp })
     });
-  } catch (err) {
-    console.error('Signup error:', err.message);
-    res.status(500).json({ message: err.message });
+
+  } catch (error) {
+    console.error('❌ Signup error:', error.message);
+    res.status(500).json({ message: 'Signup failed. Please try again.' });
   }
 });
 
-// Verify OTP for signup
+// Step 2: Verify OTP - User verifies OTP to complete signup and create account
 router.post('/verify-signup-otp', async (req, res) => {
   try {
     const { email, otp } = req.body;
+
+    // Validate input
     if (!email || !otp) {
       return res.status(400).json({ message: 'Email and OTP are required' });
     }
 
+    // Find OTP record
     const otpRecord = await OTP.findOne({ email, otp, purpose: 'signup' });
     if (!otpRecord) {
-      return res.status(400).json({ message: 'Invalid OTP' });
+      return res.status(400).json({ message: 'Invalid OTP. Please try again.' });
     }
+
+    // Check if OTP is expired
     if (otpRecord.expiry < new Date()) {
       await OTP.deleteOne({ _id: otpRecord._id });
       return res.status(400).json({ message: 'OTP has expired. Please sign up again.' });
     }
 
-    if (!otpRecord.signupName || !otpRecord.signupPasswordHash) {
+    // Check if signup data exists
+    if (!otpRecord.signupName || !otpRecord.signupPassword) {
       await OTP.deleteOne({ _id: otpRecord._id });
       return res.status(400).json({ message: 'Signup session expired. Please sign up again.' });
     }
 
-    // Re-check for existing user to avoid race conditions.
+    // Double-check user doesn't already exist
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      await OTP.deleteMany({ email, purpose: 'signup' });
+      await OTP.deleteOne({ _id: otpRecord._id });
       return res.status(400).json({ message: 'User already exists' });
     }
 
-    await User.create({
+    // Hash password before storing
+    const hashedPassword = await bcrypt.hash(otpRecord.signupPassword, 10);
+
+    // Create new user account
+    const newUser = await User.create({
       name: otpRecord.signupName,
       email,
-      password: otpRecord.signupPasswordHash,
+      password: hashedPassword,
       isVerified: true
     });
 
-    await OTP.deleteMany({ email, purpose: 'signup' });
+    // Delete OTP record (no longer needed)
+    await OTP.deleteOne({ _id: otpRecord._id });
 
-    res.json({ message: 'Email verified successfully! Account created. You can now log in.' });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.log('✅ User registered successfully:', email);
+
+    res.status(201).json({ 
+      message: 'Email verified successfully! Account created. You can now log in.',
+      user: {
+        _id: newUser._id,
+        name: newUser.name,
+        email: newUser.email
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ OTP verification error:', error.message);
+    res.status(500).json({ message: 'Verification failed. Please try again.' });
   }
 });
 
