@@ -12,13 +12,13 @@ const processEmailQueue = async () => {
   while (emailQueue.length > 0) {
     const emailTask = emailQueue.shift();
     try {
-      // Timeout protection: 5 seconds max per email
+      // Timeout protection: 10 seconds max per email (increased from 5s)
       await Promise.race([
         emailTask(),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Email timeout')), 5000))
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Email timeout after 10s')), 10000))
       ]);
     } catch (err) {
-      // Silent fail for queue
+      console.error('Queue email error:', err.message);
     }
   }
   isProcessing = false;
@@ -36,15 +36,17 @@ const createTransporter = () => {
   return nodemailer.createTransport({
     service: 'gmail',
     pool: true, // Use connection pooling
-    maxConnections: 3,
-    maxMessages: 10,
+    maxConnections: 5, // Increased from 3
+    maxMessages: 20, // Increased from 10
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASSWORD
     },
     tls: {
       rejectUnauthorized: false
-    }
+    },
+    connectionTimeout: 5000, // 5 seconds
+    socketTimeout: 10000 // 10 seconds
   });
 };
 
@@ -55,12 +57,26 @@ const motivationalLines = [
   "Success is near!",
   "One step at a time."
 ];
+
 // Send OTP email
 export const sendOtpEmail = async (email, otp) => {
   try {
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) return false;
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+      console.warn('Email credentials not configured: EMAIL_USER or EMAIL_PASSWORD missing');
+      return false;
+    }
 
     const transporter = createTransporter();
+    
+    // Verify transporter connection before sending
+    try {
+      await transporter.verify();
+      console.log('Email transporter verified successfully');
+    } catch (verifyError) {
+      console.error('Email transporter verification failed:', verifyError.message);
+      return false;
+    }
+
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: email,
@@ -85,9 +101,16 @@ export const sendOtpEmail = async (email, otp) => {
       `
     };
 
-    await transporter.sendMail(mailOptions);
+    const result = await transporter.sendMail(mailOptions);
+    console.log('OTP email sent successfully to:', email, 'MessageId:', result.messageId);
     return true;
   } catch (error) {
+    console.error('Error sending OTP email:', {
+      email,
+      error: error.message,
+      code: error.code,
+      command: error.command
+    });
     return false;
   }
 };
@@ -100,35 +123,44 @@ export function sendTaskMotivationEmail({ to, task }) {
   }
 
   queueEmail(async () => {
-    const randomLine = motivationalLines[Math.floor(Math.random() * motivationalLines.length)];
-    const transporter = createTransporter();
+    try {
+      const randomLine = motivationalLines[Math.floor(Math.random() * motivationalLines.length)];
+      const transporter = createTransporter();
 
-    const title = task.title || task.name || 'Untitled Task';
-    const description = task.description || '';
-    const estimated = task.estimatedTime || '';
+      const title = task.title || task.name || 'Untitled Task';
+      const description = task.description || '';
+      const estimated = task.estimatedTime || '';
 
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to,
-      subject: `Reminder: ${title}`,
-      html: `
-      <!DOCTYPE html>
-      <html>
-      <body style="font-family:'Segoe UI', sans-serif; background:#f4f6f8; padding:20px;">
-        <div style="max-width:600px; margin:auto; background:#fff; padding:30px; border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,0.08);">
-          <h2 style="color:#2c3e50;">📌 ${title}</h2>
-          <p style="color:#555;">${description}</p>
-          <p><strong>Estimated Time:</strong> ${estimated}</p>
-          <hr style="border:none; border-top:1px solid #eee; margin:20px 0;">
-          <p style="color:green; font-style:italic;">💡 ${randomLine}</p>
-          <p style="color:#888; font-size:14px;">CareerCompass Team</p>
-        </div>
-      </body>
-      </html>
-    `
-    };
+      const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to,
+        subject: `Reminder: ${title}`,
+        html: `
+        <!DOCTYPE html>
+        <html>
+        <body style="font-family:'Segoe UI', sans-serif; background:#f4f6f8; padding:20px;">
+          <div style="max-width:600px; margin:auto; background:#fff; padding:30px; border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,0.08);">
+            <h2 style="color:#2c3e50;">📌 ${title}</h2>
+            <p style="color:#555;">${description}</p>
+            <p><strong>Estimated Time:</strong> ${estimated}</p>
+            <hr style="border:none; border-top:1px solid #eee; margin:20px 0;">
+            <p style="color:green; font-style:italic;">💡 ${randomLine}</p>
+            <p style="color:#888; font-size:14px;">CareerCompass Team</p>
+          </div>
+        </body>
+        </html>
+      `
+      };
 
-    await transporter.sendMail(mailOptions);
+      const result = await transporter.sendMail(mailOptions);
+      console.log('Task motivation email sent to:', to, 'MessageId:', result.messageId);
+    } catch (err) {
+      console.error('Error sending task motivation email:', {
+        to,
+        error: err.message,
+        code: err.code
+      });
+    }
   });
   
   return Promise.resolve();
@@ -142,44 +174,54 @@ export function sendRoadmapMotivationEmail({ to, roadmapName, tasks = [] }) {
   }
 
   queueEmail(async () => {
-    const randomLine = motivationalLines[Math.floor(Math.random() * motivationalLines.length)];
-    const transporter = createTransporter();
+    try {
+      const randomLine = motivationalLines[Math.floor(Math.random() * motivationalLines.length)];
+      const transporter = createTransporter();
 
-    const tasksHtml = tasks.map(t => {
-      const title = t.name || t.title || 'Untitled Task';
-      const desc = t.description || '';
-      const est = t.estimatedTime || '';
-      return `
-        <li style="margin-bottom:8px;">
-          <strong>${title}</strong>
-          ${desc ? `<div style="color:#555;margin-top:4px;">${desc}</div>` : ''}
-          ${est ? `<div style="color:#777;font-size:13px;margin-top:2px;">Estimated: ${est}</div>` : ''}
-        </li>
-      `;
-    }).join('');
+      const tasksHtml = tasks.map(t => {
+        const title = t.name || t.title || 'Untitled Task';
+        const desc = t.description || '';
+        const est = t.estimatedTime || '';
+        return `
+          <li style="margin-bottom:8px;">
+            <strong>${title}</strong>
+            ${desc ? `<div style="color:#555;margin-top:4px;">${desc}</div>` : ''}
+            ${est ? `<div style="color:#777;font-size:13px;margin-top:2px;">Estimated: ${est}</div>` : ''}
+          </li>
+        `;
+      }).join('');
 
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to,
-      subject: `New roadmap added: ${roadmapName}`,
-      html: `
-        <!DOCTYPE html>
-        <html>
-        <body style="font-family:'Segoe UI', sans-serif; background:#f4f6f8; padding:20px;">
-          <div style="max-width:600px; margin:auto; background:#fff; padding:30px; border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,0.08);">
-            <h2 style="color:#2c3e50;">📚 ${roadmapName} added to your collection</h2>
-            <p style="color:#555;">Here are the tasks that were added with this roadmap:</p>
-            <ul style="color:#333;">${tasksHtml}</ul>
-            <hr style="border:none; border-top:1px solid #eee; margin:20px 0;">
-            <p style="color:green; font-style:italic;">💡 ${randomLine}</p>
-            <p style="color:#888; font-size:14px;">CareerCompass Team</p>
-          </div>
-        </body>
-        </html>
-      `
-    };
+      const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to,
+        subject: `New roadmap added: ${roadmapName}`,
+        html: `
+          <!DOCTYPE html>
+          <html>
+          <body style="font-family:'Segoe UI', sans-serif; background:#f4f6f8; padding:20px;">
+            <div style="max-width:600px; margin:auto; background:#fff; padding:30px; border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,0.08);">
+              <h2 style="color:#2c3e50;">📚 ${roadmapName} added to your collection</h2>
+              <p style="color:#555;">Here are the tasks that were added with this roadmap:</p>
+              <ul style="color:#333;">${tasksHtml}</ul>
+              <hr style="border:none; border-top:1px solid #eee; margin:20px 0;">
+              <p style="color:green; font-style:italic;">💡 ${randomLine}</p>
+              <p style="color:#888; font-size:14px;">CareerCompass Team</p>
+            </div>
+          </body>
+          </html>
+        `
+      };
 
-    await transporter.sendMail(mailOptions);
+      const result = await transporter.sendMail(mailOptions);
+      console.log('Roadmap motivation email sent to:', to, 'Roadmap:', roadmapName, 'MessageId:', result.messageId);
+    } catch (err) {
+      console.error('Error sending roadmap motivation email:', {
+        to,
+        roadmapName,
+        error: err.message,
+        code: err.code
+      });
+    }
   });
   
   return Promise.resolve();
@@ -187,37 +229,48 @@ export function sendRoadmapMotivationEmail({ to, roadmapName, tasks = [] }) {
 
 // Send verification email (for backward compatibility)
 export const sendVerificationEmail = async (email, token) => {
-  const transporter = createTransporter();
-  const verificationUrl = `${process.env.FRONTEND_URL}/verify-email?token=${token}`;
-
-  const mailOptions = {
-    from: process.env.EMAIL_USER,
-    to: email,
-    subject: 'Verify Your Email - CareerCompass',
-    html: `
-    <!DOCTYPE html>
-    <html>
-    <body style="font-family:'Segoe UI', sans-serif; background:#f4f6f8; padding:20px;">
-      <div style="max-width:600px; margin:auto; background:#fff; padding:30px; border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,0.08);">
-        <h2 style="color:#2c3e50;">👋 Welcome to CareerCompass!</h2>
-        <p>Click the button below to verify your email address:</p>
-        <div style="text-align:center; margin:25px 0;">
-          <a href="${verificationUrl}" style="background:#3498db; color:#fff; padding:12px 25px; text-decoration:none; border-radius:6px;">Verify Email</a>
-        </div>
-        <p style="word-break:break-word; color:#3498db;">${verificationUrl}</p>
-        <p style="color:#888;">This link will expire in 24 hours.</p>
-        <hr style="border:none; border-top:1px solid #eee; margin:20px 0;">
-        <p style="color:#888; font-size:14px;">CareerCompass Team</p>
-      </div>
-    </body>
-    </html>
-    `
-  };
-
   try {
-    await transporter.sendMail(mailOptions);
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+      console.warn('Email credentials not configured for verification email');
+      return false;
+    }
+
+    const transporter = createTransporter();
+    const verificationUrl = `${process.env.FRONTEND_URL}/verify-email?token=${token}`;
+
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: 'Verify Your Email - CareerCompass',
+      html: `
+      <!DOCTYPE html>
+      <html>
+      <body style="font-family:'Segoe UI', sans-serif; background:#f4f6f8; padding:20px;">
+        <div style="max-width:600px; margin:auto; background:#fff; padding:30px; border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,0.08);">
+          <h2 style="color:#2c3e50;">👋 Welcome to CareerCompass!</h2>
+          <p>Click the button below to verify your email address:</p>
+          <div style="text-align:center; margin:25px 0;">
+            <a href="${verificationUrl}" style="background:#3498db; color:#fff; padding:12px 25px; text-decoration:none; border-radius:6px;">Verify Email</a>
+          </div>
+          <p style="word-break:break-word; color:#3498db;">${verificationUrl}</p>
+          <p style="color:#888;">This link will expire in 24 hours.</p>
+          <hr style="border:none; border-top:1px solid #eee; margin:20px 0;">
+          <p style="color:#888; font-size:14px;">CareerCompass Team</p>
+        </div>
+      </body>
+      </html>
+      `
+    };
+
+    const result = await transporter.sendMail(mailOptions);
+    console.log('Verification email sent to:', email, 'MessageId:', result.messageId);
     return true;
   } catch (error) {
+    console.error('Error sending verification email:', {
+      email,
+      error: error.message,
+      code: error.code
+    });
     return false;
   }
 };
@@ -225,6 +278,11 @@ export const sendVerificationEmail = async (email, token) => {
 
 // Send password reset email
 export const sendPasswordResetEmail = async (email, token) => {
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+    console.warn('Email credentials not configured for password reset');
+    return false;
+  }
+
   const transporter = createTransporter();
   const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${token}`;
 
@@ -253,9 +311,20 @@ export const sendPasswordResetEmail = async (email, token) => {
   };
 
   try {
-    await transporter.sendMail(mailOptions);
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+      console.warn('Email credentials not configured for password reset');
+      return false;
+    }
+
+    const result = await transporter.sendMail(mailOptions);
+    console.log('Password reset email sent to:', email, 'MessageId:', result.messageId);
     return true;
   } catch (error) {
+    console.error('Error sending password reset email:', {
+      email,
+      error: error.message,
+      code: error.code
+    });
     return false;
   }
 };

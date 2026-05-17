@@ -11,13 +11,13 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchRoadmaps = async () => {
       try {
-        const res = await fetch("https://careerpath-54sr.onrender.com/api/roadmaps");
+        const res = await fetch("http://localhost:5000/api/roadmaps");
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         const data = await res.json();
         setRoadmaps(data);
-        console.log("📊 Roadmaps fetched successfully:", data);
+        console.log("Roadmaps fetched successfully:", data);
       } catch (err) {
-        console.error("❌ Error fetching roadmaps:", err);
+        console.error("Error fetching roadmaps:", err);
         setError(err.message);
       } finally {
         setLoading(false);
@@ -119,4 +119,3 @@ export default function Dashboard() {
   );
 }
 
-export default Dashboard;

@@ -40,17 +40,34 @@ router.post('/signup', async (req, res) => {
       purpose: 'signup'
     });
 
-    // Send OTP email
+    // Send OTP email with timeout protection
     let emailSent = true;
     if (process.env.EMAIL_USER && process.env.EMAIL_PASSWORD) {
-      emailSent = await sendOtpEmail(email, otp);
+      try {
+        // Add 15 second timeout to email sending
+        const emailPromise = sendOtpEmail(email, otp);
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('OTP email sending timeout')), 15000)
+        );
+        
+        emailSent = await Promise.race([emailPromise, timeoutPromise]);
+      } catch (emailError) {
+        console.error('Signup - Email sending error:', emailError.message);
+        emailSent = false;
+      }
     }
 
+    // If email sending failed, delete user and return error
     if (!emailSent && process.env.EMAIL_USER) {
       await User.findByIdAndDelete(user._id);
-      return res.status(500).json({ message: 'Failed to send OTP email' });
+      await OTP.deleteOne({ email, purpose: 'signup' });
+      return res.status(500).json({ 
+        message: 'Failed to send OTP email. Please check your email configuration or try again later.',
+        error: 'EMAIL_SEND_FAILED'
+      });
     }
 
+    console.log('Signup successful for:', email, '- OTP sent');
     res.status(201).json({ 
       message: 'Signup successful. OTP sent to your email for verification.',
       email,
@@ -58,6 +75,7 @@ router.post('/signup', async (req, res) => {
       ...(process.env.NODE_ENV === 'development' && !process.env.EMAIL_USER && { otp })
     });
   } catch (err) {
+    console.error('Signup error:', err.message);
     res.status(500).json({ message: err.message });
   }
 });
