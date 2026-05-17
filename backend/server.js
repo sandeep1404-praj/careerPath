@@ -38,18 +38,32 @@ const allowedOrigins = [
   'https://careerpathsan.netlify.app'
 ].filter(Boolean);
 
+console.log('🔐 CORS Allowed Origins:', allowedOrigins);
+
 app.use(cors({
   origin: function(origin, callback) {
     // Allow REST tools or same-origin (no origin header)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) return callback(null, true);
+    if (!origin) {
+      console.log('✅ CORS: No origin header (same-origin or REST tool)');
+      return callback(null, true);
+    }
+    if (allowedOrigins.includes(origin)) {
+      console.log(`✅ CORS: Origin allowed - ${origin}`);
+      return callback(null, true);
+    }
+    console.error(`❌ CORS: Origin blocked - ${origin}`);
     return callback(new Error(`CORS blocked: ${origin} not in allowed origins`));
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  maxAge: 600 // cache preflight for 10 minutes
+  exposedHeaders: ['Content-Range', 'X-Content-Range'],
+  maxAge: 86400 // cache preflight for 24 hours
 }));
+
+// Explicit OPTIONS handler
+app.options('*', cors());
+
 // Optionally specify success status for legacy browsers
 app.use((req, res, next) => {
   res.header('Vary', 'Origin');

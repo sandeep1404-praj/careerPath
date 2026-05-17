@@ -1,23 +1,39 @@
 import nodemailer from 'nodemailer';
 
 /**
- * EMAIL SERVICE - RENDER OPTIMIZED (May 17, 2026)
+ * EMAIL SERVICE - RENDER OPTIMIZED (May 17, 2026 - FINAL)
  * 
  * FIXES FOR RENDER DEPLOYMENT:
- * 1. Increased connection timeout: 15s → 60s (Render network is slower)
- * 2. Increased socket timeout: 30s → 90s (Gmail takes time to respond)
- * 3. Disabled connection pooling (pool: false) - causes issues on Render
- * 4. Reversed port order: Try SSL (465) first, then STARTTLS (587)
- * 5. Fixed retry logic: Retries timeouts instead of immediately breaking
- * 6. Longer retry waits: 2s, 5s, 10s, 15s (instead of exponential)
- * 7. Increased max retries: 3 → 4 attempts per port
+ * 1. Added DNS logging to detect network issues early
+ * 2. Reduced timeout to 20s (Render kills long connections)
+ * 3. Skip credential verification (slow on Render)
+ * 4. Direct send with faster timeout
+ * 5. Aggressive port fallback strategy
  * 
- * RESULT: Handles slow Render network connections better
+ * If SMTP fails, consider:
+ * - Using SendGrid API (set EMAIL_SERVICE=sendgrid, SENDGRID_API_KEY)
+ * - Using Mailgun API
+ * - Using AWS SES
  */
+
+import { promises as dnsPromises } from 'dns';
 
 // Email queue for async/non-blocking sends
 const emailQueue = [];
 let isProcessing = false;
+
+// DNS debug helper
+const debugDNS = async (host) => {
+  try {
+    console.log(`🔍 [DNS] Resolving ${host}...`);
+    const addresses = await dnsPromises.resolve4(host);
+    console.log(`✅ [DNS] ${host} resolved to: ${addresses.join(', ')}`);
+    return true;
+  } catch (error) {
+    console.error(`❌ [DNS] Failed to resolve ${host}:`, error.message);
+    return false;
+  }
+};
 
 // Process email queue with timeout protection
 const processEmailQueue = async () => {
@@ -27,10 +43,10 @@ const processEmailQueue = async () => {
   while (emailQueue.length > 0) {
     const emailTask = emailQueue.shift();
     try {
-      // Timeout protection: 10 seconds max per email (increased from 5s)
+      // Timeout protection: 45 seconds max per email (Render times out long requests)
       await Promise.race([
         emailTask(),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Email timeout after 10s')), 10000))
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Email queue timeout after 45s')), 45000))
       ]);
     } catch (err) {
       console.error('Queue email error:', err.message);
@@ -46,20 +62,19 @@ const queueEmail = (emailFunction) => {
   setTimeout(processEmailQueue, 100);
 };
 
-// Create transporter with connection pooling
+// Create transporter - OPTIMIZED FOR RENDER (short timeouts, no pooling)
 const createTransporter = (useSSL = false) => {
   const config = {
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASSWORD
     },
-    pool: false, // Disable pool on Render to avoid connection issues
+    pool: false, // Render doesn't like connection pooling
     maxConnections: 1,
     maxMessages: 1,
     tls: {
       rejectUnauthorized: false,
       minVersion: 'TLSv1.2',
-      // More relaxed TLS config for problematic networks
       ciphers: 'DEFAULT'
     }
   };
@@ -69,20 +84,20 @@ const createTransporter = (useSSL = false) => {
     config.host = 'smtp.gmail.com';
     config.port = 465;
     config.secure = true;
-    // **RENDER FIX**: Increase timeouts significantly (Render is slow)
-    config.connectionTimeout = 60000; // 60 seconds (was 15s)
-    config.socketTimeout = 90000; // 90 seconds (was 30s)
+    // **RENDER FIX**: Very short timeouts - Render kills long connections anyway
+    config.connectionTimeout = 15000; // 15 seconds (Render times out at ~30s)
+    config.socketTimeout = 20000; // 20 seconds
   } else {
     // Port 587 with STARTTLS
     config.host = 'smtp.gmail.com';
     config.port = 587;
     config.secure = false;
-    // **RENDER FIX**: Increase timeouts significantly
-    config.connectionTimeout = 60000; // 60 seconds (was 15s)
-    config.socketTimeout = 90000; // 90 seconds (was 30s)
+    // **RENDER FIX**: Very short timeouts
+    config.connectionTimeout = 15000; // 15 seconds
+    config.socketTimeout = 20000; // 20 seconds
   }
 
-  console.log(`📧 Creating transporter: smtp.gmail.com:${config.port} (${useSSL ? 'SSL' : 'STARTTLS'}, timeout: ${config.connectionTimeout / 1000}s)`);
+  console.log(`📧 [TRANSPORTER] Creating: smtp.gmail.com:${config.port} (${useSSL ? 'SSL' : 'STARTTLS'}, timeout: ${config.connectionTimeout / 1000}s)`);
   return nodemailer.createTransport(config);
 };
 
@@ -94,12 +109,17 @@ const motivationalLines = [
   "One step at a time."
 ];
 
-// Retry email sending with exponential backoff and port fallback
-const sendEmailWithRetry = async (mailOptions, maxRetries = 4) => {
+// Retry email sending - OPTIMIZED FOR RENDER
+const sendEmailWithRetry = async (mailOptions, maxRetries = 3) => {
   let lastError;
   
-  // Try with STARTTLS first (port 587), then fallback to SSL (port 465)
-  // **RENDER FIX**: Reverse order - try SSL (465) first which is more reliable on Render
+  // Check DNS first
+  const dnsOk = await debugDNS('smtp.gmail.com');
+  if (!dnsOk) {
+    console.error('⚠️ DNS resolution failed - email service unavailable on this network');
+  }
+  
+  // Try SSL (465) first, then STARTTLS (587)
   const ports = [
     { port: 465, ssl: true, name: 'SSL' },
     { port: 587, ssl: false, name: 'STARTTLS' }
@@ -112,20 +132,19 @@ const sendEmailWithRetry = async (mailOptions, maxRetries = 4) => {
       try {
         const transporter = createTransporter(portConfig.ssl);
         
-        // Check credentials first
-        console.log(`   [Attempt ${attempt}/${maxRetries}] Verifying credentials...`);
-        await transporter.verify();
-        console.log(`   ✅ Credentials verified`);
+        console.log(`   [Attempt ${attempt}/${maxRetries}] Sending email to: ${mailOptions.to}`);
         
-        console.log(`   [Attempt ${attempt}/${maxRetries}] Sending email...`);
+        // **RENDER FIX**: Skip verify() - it's slow and times out
+        // Just send directly
         const result = await transporter.sendMail(mailOptions);
-        console.log(`   ✅ Email sent successfully:`, {
-          to: mailOptions.to,
+        
+        console.log(`   ✅ [SUCCESS] Email sent via ${portConfig.name}:${portConfig.port}`, {
           messageId: result.messageId,
-          via: `${portConfig.name}:${portConfig.port}`,
+          to: mailOptions.to,
           attempt
         });
         return result;
+        
       } catch (error) {
         lastError = error;
         console.error(`   ❌ [Attempt ${attempt}/${maxRetries}] Failed:`, {
@@ -135,30 +154,29 @@ const sendEmailWithRetry = async (mailOptions, maxRetries = 4) => {
           via: `${portConfig.name}:${portConfig.port}`
         });
         
-        // Auth errors = don't retry, skip to next port
-        if (error.code === 'EAUTH' || error.message?.includes('Invalid login')) {
-          console.warn(`   ⚠️ Authentication failed - skipping to next port`);
-          break; // Break inner loop, try next port
+        // Auth errors = don't retry this port
+        if (error.code === 'EAUTH' || error.message?.includes('Invalid login') || error.message?.includes('Invalid credentials')) {
+          console.warn(`   ⚠️ Authentication error - skipping to next port`);
+          break;
         }
         
-        // **RENDER FIX**: For timeout/connection errors, RETRY same port with longer wait
-        // Don't immediately break - give it more attempts
-        if (error.code === 'ETIMEDOUT' || error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
+        // Timeout errors - retry with short waits
+        if (error.code === 'ETIMEDOUT' || error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND' || error.code === 'EHOSTUNREACH') {
           if (attempt < maxRetries) {
-            // Longer wait times for Render timeouts: 2s, 5s, 10s, 15s
-            const waitTimes = [2, 5, 10, 15];
-            const waitTime = waitTimes[attempt - 1] || 15;
-            console.log(`   ⏳ Connection timeout - Retrying in ${waitTime}s (Attempt ${attempt + 1}/${maxRetries})...`);
+            // Short waits: 1s, 2s, 3s
+            const waitTimes = [1, 2, 3];
+            const waitTime = waitTimes[attempt - 1] || 3;
+            console.log(`   ⏳ Timeout - Retrying in ${waitTime}s (Attempt ${attempt + 1}/${maxRetries})...`);
             await new Promise(resolve => setTimeout(resolve, waitTime * 1000));
           } else {
-            console.warn(`   ⚠️ Max retries reached for ${portConfig.name} - trying next port`);
-            break; // Only break after all retries exhausted
+            console.warn(`   ⚠️ Max retries exhausted for ${portConfig.name}`);
+            break;
           }
         } else {
-          // For other errors, retry same port
+          // Other errors - retry same port
           if (attempt < maxRetries) {
             const waitTime = Math.pow(2, attempt) - 1;
-            console.log(`   ⏳ Retrying in ${waitTime}s...`);
+            console.log(`   ⏳ Error - Retrying in ${waitTime}s...`);
             await new Promise(resolve => setTimeout(resolve, waitTime * 1000));
           }
         }
@@ -166,9 +184,9 @@ const sendEmailWithRetry = async (mailOptions, maxRetries = 4) => {
     }
   }
   
-  // If we get here, all attempts failed
-  console.error(`\n❌ Email sending failed after all retry attempts`);
-  throw lastError || new Error('Unknown email sending error');
+  // All attempts failed
+  console.error(`\n❌ Email sending failed after all retry attempts (${maxRetries * 2} total)`);
+  throw lastError || new Error('Email sending failed - no response from server');
 };
 
 // Send OTP email
