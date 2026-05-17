@@ -39,17 +39,12 @@ router.post('/signup', async (req, res) => {
       signupPasswordHash: hashedPassword
     });
 
-    // Send OTP email with timeout protection (allow retries: up to 60 seconds)
+    // Send OTP email with retry logic (email service handles its own timeouts)
     let emailSent = true;
     if (process.env.EMAIL_USER && process.env.EMAIL_PASSWORD) {
       try {
-        // Add 60 second timeout to email sending (allows 3 retries with exponential backoff)
-        const emailPromise = sendOtpEmail(email, otp);
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('OTP email sending timeout after 60s')), 60000)
-        );
-        
-        emailSent = await Promise.race([emailPromise, timeoutPromise]);
+        // Don't add timeout here - let email service handle retries and timeouts
+        emailSent = await sendOtpEmail(email, otp);
       } catch (emailError) {
         console.error('Signup - Email sending error:', emailError.message);
         emailSent = false;
