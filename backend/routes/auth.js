@@ -21,23 +21,22 @@ router.post('/signup', async (req, res) => {
     if (existingUser) return res.status(400).json({ message: 'User already exists' });
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = await User.create({ 
-      name, 
-      email, 
-      password: hashedPassword,
-      isVerified: false
-    });
 
     // Generate OTP
     const otp = generateOTP();
     const otpExpiry = new Date(Date.now() + 3 * 60 * 1000); // 3 minutes
 
-    // Save OTP
+    // Remove any previous pending signup OTP and store fresh pending signup data.
+    await OTP.deleteMany({ email, purpose: 'signup' });
+
+    // Save OTP with pending signup details (user record is created only after OTP verification)
     await OTP.create({
       email,
       otp,
       expiry: otpExpiry,
-      purpose: 'signup'
+      purpose: 'signup',
+      signupName: name,
+      signupPasswordHash: hashedPassword
     });
 
     // Send OTP email with timeout protection
@@ -57,10 +56,9 @@ router.post('/signup', async (req, res) => {
       }
     }
 
-    // If email sending failed, delete user and return error
+    // If email sending failed, remove pending signup OTP and return error
     if (!emailSent && process.env.EMAIL_USER) {
-      await User.findByIdAndDelete(user._id);
-      await OTP.deleteOne({ email, purpose: 'signup' });
+      await OTP.deleteMany({ email, purpose: 'signup' });
       return res.status(500).json({ 
         message: 'Failed to send OTP email. Please check your email configuration or try again later.',
         error: 'EMAIL_SEND_FAILED'
@@ -97,16 +95,28 @@ router.post('/verify-signup-otp', async (req, res) => {
       return res.status(400).json({ message: 'OTP has expired. Please sign up again.' });
     }
 
-    // Mark user as verified
-    const user = await User.findOne({ email });
-    if (!user) return res.status(404).json({ message: 'User not found' });
+    if (!otpRecord.signupName || !otpRecord.signupPasswordHash) {
+      await OTP.deleteOne({ _id: otpRecord._id });
+      return res.status(400).json({ message: 'Signup session expired. Please sign up again.' });
+    }
 
-    user.isVerified = true;
-    await user.save();
+    // Re-check for existing user to avoid race conditions.
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      await OTP.deleteMany({ email, purpose: 'signup' });
+      return res.status(400).json({ message: 'User already exists' });
+    }
 
-    await OTP.deleteOne({ _id: otpRecord._id });
+    await User.create({
+      name: otpRecord.signupName,
+      email,
+      password: otpRecord.signupPasswordHash,
+      isVerified: true
+    });
 
-    res.json({ message: 'Email verified successfully! You can now log in.' });
+    await OTP.deleteMany({ email, purpose: 'signup' });
+
+    res.json({ message: 'Email verified successfully! Account created. You can now log in.' });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

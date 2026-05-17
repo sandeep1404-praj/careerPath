@@ -1,40 +1,70 @@
 import redis from 'redis';
 
 let redisClient = null;
+let isRedisConnected = false;
 
 const initRedis = async () => {
   try {
     const client = redis.createClient({
-      host: process.env.REDIS_HOST || 'localhost',
-      port: process.env.REDIS_PORT || 6379,
+      socket: {
+        host: process.env.REDIS_HOST || 'localhost',
+        port: parseInt(process.env.REDIS_PORT || '6379'),
+        reconnectStrategy: (retries) => {
+          if (retries > 10) {
+            console.warn('⚠️ Redis: Max reconnection attempts reached');
+            return new Error('Max redis retries');
+          }
+          return Math.min(retries * 100, 3000);
+        }
+      },
       password: process.env.REDIS_PASSWORD || undefined,
-      retry_strategy: (options) => {
-        if (options.error && options.error.code === 'ECONNREFUSED') {
-          console.warn('⚠️ Redis connection refused - caching disabled');
-          return new Error('End redis client');
-        }
-        if (options.total_retry_time > 1000 * 60 * 60) {
-          return new Error('End redis client');
-        }
-        return Math.min(options.attempt * 100, 3000);
-      }
+      // Don't throw on connection error during initialization
+      disableOfflineQueue: false
     });
 
     client.on('error', (err) => {
-      if (err.message !== 'End redis client') {
-        console.error('Redis Error:', err);
+      if (err.code === 'ECONNREFUSED') {
+        console.warn('⚠️ Redis ECONNREFUSED - ensure Redis server is running on', 
+          `${process.env.REDIS_HOST || 'localhost'}:${process.env.REDIS_PORT || 6379}`);
+      } else if (err.code !== 'NR_CLOSED') {
+        console.error('❌ Redis Error:', err.message);
       }
+      isRedisConnected = false;
     });
 
     client.on('connect', () => {
       console.log('✅ Redis Connected Successfully');
+      isRedisConnected = true;
     });
 
-    await client.connect();
-    redisClient = client;
+    client.on('reconnecting', () => {
+      console.log('🔄 Redis Reconnecting...');
+    });
+
+    // Try to connect but don't block if it fails
+    try {
+      await Promise.race([
+        client.connect(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Redis connection timeout')), 5000))
+      ]);
+      isRedisConnected = true;
+      redisClient = client;
+      console.log('✅ Redis initialization successful');
+    } catch (connectError) {
+      console.warn('⚠️ Redis connection failed:', connectError.message);
+      console.warn('⚠️ Caching disabled - but app will continue to work');
+      // Don't throw - let app continue without Redis
+      try {
+        await client.quit();
+      } catch (e) {
+        // Ignore quit errors
+      }
+    }
+    
     return client;
   } catch (error) {
-    console.warn('⚠️ Redis initialization failed - caching disabled:', error.message);
+    console.warn('⚠️ Redis initialization error:', error.message);
+    console.warn('⚠️ App will continue without Redis caching');
     return null;
   }
 };
@@ -43,7 +73,7 @@ const getRedisClient = () => redisClient;
 
 const isRedisReady = () => {
   try {
-    return redisClient && redisClient.isOpen;
+    return isRedisConnected && redisClient && redisClient.isOpen;
   } catch {
     return false;
   }

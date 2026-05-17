@@ -13,6 +13,7 @@ import tasksRoutes from './routes/tasks.js';
 import userRoutes from './routes/user.js';
 import resumeRoutes from './routes/resumeRoutes.js';
 import aiRoutes from './routes/aiRoutes.js';
+import testRoutes from './routes/test.js';
 
 dotenv.config();
 const app = express();
@@ -78,8 +79,12 @@ app.use((req, res, next) => {
 // Connect MongoDB
 connectDB();
 
-// Initialize Redis for caching
-initRedis();
+// Initialize Redis for caching (non-blocking)
+// If Redis is not available, app will continue without caching
+initRedis().catch(err => {
+  console.warn('⚠️ Redis initialization failed:', err.message);
+  console.warn('⚠️ App will continue without Redis caching');
+});
 
 // Health check endpoint for Render
 app.get('/health', (req, res) => {
@@ -101,6 +106,7 @@ app.use("/api/roadmaps", roadmapRoutes);
 app.use('/api/tasks', tasksRoutes);
 app.use('/api/resumes', resumeRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/test', testRoutes);
 
 // Import error handlers
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
