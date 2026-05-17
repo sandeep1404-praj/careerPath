@@ -39,16 +39,10 @@ router.post('/signup', async (req, res) => {
       signupPasswordHash: hashedPassword
     });
 
-    // Send OTP email with retry logic (email service handles its own timeouts)
+    // Send OTP email
     let emailSent = true;
     if (process.env.EMAIL_USER && process.env.EMAIL_PASSWORD) {
-      try {
-        // Don't add timeout here - let email service handle retries and timeouts
-        emailSent = await sendOtpEmail(email, otp);
-      } catch (emailError) {
-        console.error('Signup - Email sending error:', emailError.message);
-        emailSent = false;
-      }
+      emailSent = await sendOtpEmail(email, otp);
     }
 
     // If email sending failed, remove pending signup OTP and return error
@@ -57,8 +51,7 @@ router.post('/signup', async (req, res) => {
       console.error('Signup OTP email failed for:', email, '- check email configuration and Gmail App Password');
       return res.status(500).json({ 
         message: 'Failed to send OTP email. Please verify your email address and try again. If problem persists, contact support.',
-        error: 'EMAIL_SEND_FAILED',
-        debug: process.env.NODE_ENV === 'development' ? 'Check backend logs for email error details' : undefined
+        error: 'EMAIL_SEND_FAILED'
       });
     }
 
