@@ -34,19 +34,22 @@ const queueEmail = (emailFunction) => {
 // Create transporter with connection pooling
 const createTransporter = () => {
   return nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false, // Use STARTTLS instead of TLS
     pool: true, // Use connection pooling
-    maxConnections: 5, // Increased from 3
-    maxMessages: 20, // Increased from 10
+    maxConnections: 5,
+    maxMessages: 20,
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASSWORD
     },
     tls: {
-      rejectUnauthorized: false
+      rejectUnauthorized: false,
+      minVersion: 'TLSv1.2'
     },
-    connectionTimeout: 5000, // 5 seconds
-    socketTimeout: 10000 // 10 seconds
+    connectionTimeout: 15000, // 15 seconds (increased for production)
+    socketTimeout: 30000 // 30 seconds (increased for production)
   });
 };
 
@@ -58,22 +61,50 @@ const motivationalLines = [
   "One step at a time."
 ];
 
+// Retry email sending with exponential backoff
+const sendEmailWithRetry = async (mailOptions, maxRetries = 3) => {
+  let lastError;
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const transporter = createTransporter();
+      const result = await transporter.sendMail(mailOptions);
+      console.log(`✅ Email sent successfully on attempt ${attempt}:`, {
+        to: mailOptions.to,
+        messageId: result.messageId
+      });
+      return result;
+    } catch (error) {
+      lastError = error;
+      console.error(`❌ Email send failed on attempt ${attempt}:`, {
+        to: mailOptions.to,
+        error: error.message,
+        code: error.code,
+        attempt
+      });
+      
+      // Don't retry on auth errors
+      if (error.code === 'EAUTH' || error.message?.includes('Invalid login')) {
+        throw error;
+      }
+      
+      // Wait before retry (exponential backoff: 1s, 3s, 7s)
+      if (attempt < maxRetries) {
+        const waitTime = Math.pow(2, attempt) - 1;
+        console.warn(`⏳ Retrying in ${waitTime}s...`);
+        await new Promise(resolve => setTimeout(resolve, waitTime * 1000));
+      }
+    }
+  }
+  
+  throw lastError;
+};
+
 // Send OTP email
 export const sendOtpEmail = async (email, otp) => {
   try {
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
-      console.warn('Email credentials not configured: EMAIL_USER or EMAIL_PASSWORD missing');
-      return false;
-    }
-
-    const transporter = createTransporter();
-    
-    // Verify transporter connection before sending
-    try {
-      await transporter.verify();
-      console.log('Email transporter verified successfully');
-    } catch (verifyError) {
-      console.error('Email transporter verification failed:', verifyError.message);
+      console.warn('⚠️ Email credentials not configured: EMAIL_USER or EMAIL_PASSWORD missing');
       return false;
     }
 
@@ -101,11 +132,10 @@ export const sendOtpEmail = async (email, otp) => {
       `
     };
 
-    const result = await transporter.sendMail(mailOptions);
-    console.log('OTP email sent successfully to:', email, 'MessageId:', result.messageId);
+    await sendEmailWithRetry(mailOptions);
     return true;
   } catch (error) {
-    console.error('Error sending OTP email:', {
+    console.error('❌ Error sending OTP email after all retries:', {
       email,
       error: error.message,
       code: error.code,

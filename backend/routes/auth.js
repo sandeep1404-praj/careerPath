@@ -39,14 +39,14 @@ router.post('/signup', async (req, res) => {
       signupPasswordHash: hashedPassword
     });
 
-    // Send OTP email with timeout protection
+    // Send OTP email with timeout protection (allow retries: up to 60 seconds)
     let emailSent = true;
     if (process.env.EMAIL_USER && process.env.EMAIL_PASSWORD) {
       try {
-        // Add 15 second timeout to email sending
+        // Add 60 second timeout to email sending (allows 3 retries with exponential backoff)
         const emailPromise = sendOtpEmail(email, otp);
         const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('OTP email sending timeout')), 15000)
+          setTimeout(() => reject(new Error('OTP email sending timeout after 60s')), 60000)
         );
         
         emailSent = await Promise.race([emailPromise, timeoutPromise]);
@@ -59,13 +59,15 @@ router.post('/signup', async (req, res) => {
     // If email sending failed, remove pending signup OTP and return error
     if (!emailSent && process.env.EMAIL_USER) {
       await OTP.deleteMany({ email, purpose: 'signup' });
+      console.error('Signup OTP email failed for:', email, '- check email configuration and Gmail App Password');
       return res.status(500).json({ 
-        message: 'Failed to send OTP email. Please check your email configuration or try again later.',
-        error: 'EMAIL_SEND_FAILED'
+        message: 'Failed to send OTP email. Please verify your email address and try again. If problem persists, contact support.',
+        error: 'EMAIL_SEND_FAILED',
+        debug: process.env.NODE_ENV === 'development' ? 'Check backend logs for email error details' : undefined
       });
     }
 
-    console.log('Signup successful for:', email, '- OTP sent');
+    console.log('✅ Signup successful for:', email, '- OTP sent');
     res.status(201).json({ 
       message: 'Signup successful. OTP sent to your email for verification.',
       email,
