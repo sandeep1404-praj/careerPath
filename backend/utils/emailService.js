@@ -361,7 +361,6 @@ export const sendPasswordResetEmail = async (email, token) => {
     return false;
   }
 
-  const transporter = createTransporter();
   const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${token}`;
 
   const mailOptions = {
@@ -394,11 +393,12 @@ export const sendPasswordResetEmail = async (email, token) => {
       return false;
     }
 
-    const result = await transporter.sendMail(mailOptions);
-    console.log('Password reset email sent to:', email, 'MessageId:', result.messageId);
+    console.log(`\n📨 [PASSWORD RESET] Sending password reset email to: ${email}`);
+    await sendEmailWithRetry(mailOptions);
+    console.log('✅ Password reset email sent to:', email);
     return true;
   } catch (error) {
-    console.error('Error sending password reset email:', {
+    console.error('❌ Error sending password reset email:', {
       email,
       error: error.message,
       code: error.code

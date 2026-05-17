@@ -13,8 +13,20 @@ const router = express.Router();
 // Generate numeric OTP
 const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
 
+// Add timeout middleware for auth routes (email operations can be slow)
+// 90 seconds for signup/password reset, 30 seconds for login
+const setSignupTimeout = (req, res, next) => {
+  req.setTimeout(90000); // 90 seconds for signup (includes email retry logic)
+  next();
+};
+
+const setEmailTimeout = (req, res, next) => {
+  req.setTimeout(90000);
+  next();
+};
+
 // Signup with OTP verification
-router.post('/signup', async (req, res) => {
+router.post('/signup', setSignupTimeout, async (req, res) => {
   const { name, email, password } = req.body;
   try {
     const existingUser = await User.findOne({ email });
@@ -40,15 +52,34 @@ router.post('/signup', async (req, res) => {
     });
 
     // Send OTP email
-    let emailSent = true;
-    if (process.env.EMAIL_USER && process.env.EMAIL_PASSWORD) {
-      emailSent = await sendOtpEmail(email, otp);
+    // Check if email configuration is complete
+    const emailConfigured = process.env.EMAIL_USER && process.env.EMAIL_PASSWORD;
+    
+    let emailSent = false;
+    if (!emailConfigured) {
+      console.warn('⚠️ Email configuration incomplete - EMAIL_USER or EMAIL_PASSWORD missing');
+      // In development, allow signup without email. In production, must have email config
+      if (process.env.NODE_ENV === 'production') {
+        await OTP.deleteMany({ email, purpose: 'signup' });
+        return res.status(500).json({ 
+          message: 'Server email configuration error. Please contact support.',
+          error: 'EMAIL_CONFIG_MISSING'
+        });
+      }
+    } else {
+      // Email is configured, attempt to send
+      try {
+        emailSent = await sendOtpEmail(email, otp);
+      } catch (emailError) {
+        console.error('Exception during OTP send:', emailError.message);
+        emailSent = false;
+      }
     }
 
-    // If email sending failed, remove pending signup OTP and return error
-    if (!emailSent && process.env.EMAIL_USER) {
+    // If email sending failed (and was configured), return error
+    if (!emailSent && emailConfigured) {
       await OTP.deleteMany({ email, purpose: 'signup' });
-      console.error('Signup OTP email failed for:', email, '- check email configuration and Gmail App Password');
+      console.error('Signup OTP email failed for:', email, '- check Gmail App Password or connection issues');
       return res.status(500).json({ 
         message: 'Failed to send OTP email. Please verify your email address and try again. If problem persists, contact support.',
         error: 'EMAIL_SEND_FAILED'
@@ -156,7 +187,7 @@ router.post('/login', async (req, res) => {
 });
 
 // Resend OTP
-router.post('/resend-otp', async (req, res) => {
+router.post('/resend-otp', setEmailTimeout, async (req, res) => {
   try {
     const { email, password } = req.body;
 
@@ -192,14 +223,33 @@ router.post('/resend-otp', async (req, res) => {
     await otpRecord.save();
 
     // Send OTP email
-    let emailSent = true;
-    if (process.env.EMAIL_USER && process.env.EMAIL_PASSWORD) {
-      emailSent = await sendOtpEmail(email, otp);
+    const emailConfigured = process.env.EMAIL_USER && process.env.EMAIL_PASSWORD;
+    
+    let emailSent = false;
+    if (!emailConfigured) {
+      console.warn('⚠️ Email configuration incomplete - EMAIL_USER or EMAIL_PASSWORD missing');
+      if (process.env.NODE_ENV === 'production') {
+        await OTP.deleteOne({ _id: otpRecord._id });
+        return res.status(500).json({ 
+          message: 'Server email configuration error. Please contact support.',
+          error: 'EMAIL_CONFIG_MISSING'
+        });
+      }
+    } else {
+      try {
+        emailSent = await sendOtpEmail(email, otp);
+      } catch (emailError) {
+        console.error('Exception during OTP send:', emailError.message);
+        emailSent = false;
+      }
     }
 
-    if (!emailSent && process.env.EMAIL_USER) {
+    if (!emailSent && emailConfigured) {
       await OTP.deleteOne({ _id: otpRecord._id });
-      return res.status(500).json({ message: 'Failed to send OTP email' });
+      return res.status(500).json({ 
+        message: 'Failed to send OTP email. Please verify your email address and try again. If problem persists, contact support.',
+        error: 'EMAIL_SEND_FAILED'
+      });
     }
 
     res.json({
@@ -214,7 +264,7 @@ router.post('/resend-otp', async (req, res) => {
 });
 
 // Request password reset
-router.post('/forgot-password', async (req, res) => {
+router.post('/forgot-password', setEmailTimeout, async (req, res) => {
   try {
     const { email } = req.body;
     if (!email) return res.status(400).json({ message: 'Email is required' });
@@ -230,7 +280,15 @@ router.post('/forgot-password', async (req, res) => {
     user.resetPasswordExpires = resetTokenExpiry;
     await user.save();
 
-    await sendPasswordResetEmail(email, resetToken);
+    const emailSent = await sendPasswordResetEmail(email, resetToken);
+    
+    if (!emailSent) {
+      console.error('Password reset email failed for:', email);
+      return res.status(500).json({ 
+        message: 'Failed to send password reset email. Please verify your email address and try again. If problem persists, contact support.',
+        error: 'EMAIL_SEND_FAILED'
+      });
+    }
 
     res.json({ message: 'Password reset email sent' });
   } catch (err) {
