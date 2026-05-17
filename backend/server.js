@@ -61,9 +61,6 @@ app.use(cors({
   maxAge: 86400 // cache preflight for 24 hours
 }));
 
-// Explicit OPTIONS handler
-app.options('*', cors());
-
 // Optionally specify success status for legacy browsers
 app.use((req, res, next) => {
   res.header('Vary', 'Origin');
@@ -132,6 +129,15 @@ app.use(notFoundHandler);
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, '0.0.0.0');
+const server = app.listen(PORT, '0.0.0.0', () => {
+  console.log(`\n🚀 Server running on port ${PORT}`);
+  console.log(`📍 API: http://localhost:${PORT}`);
+  startTaskEmailScheduler();
+  console.log('📧 Task email scheduler started\n');
+});
 
-startTaskEmailScheduler();
+// Handle server errors
+server.on('error', (err) => {
+  console.error('❌ Server Error:', err);
+  process.exit(1);
+});
