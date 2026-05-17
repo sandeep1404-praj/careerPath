@@ -32,25 +32,39 @@ const queueEmail = (emailFunction) => {
 };
 
 // Create transporter with connection pooling
-const createTransporter = () => {
-  return nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 587,
-    secure: false, // Use STARTTLS instead of TLS
-    pool: true, // Use connection pooling
-    maxConnections: 5,
-    maxMessages: 20,
+const createTransporter = (useSSL = false) => {
+  const config = {
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASSWORD
     },
+    pool: true,
+    maxConnections: 5,
+    maxMessages: 20,
     tls: {
       rejectUnauthorized: false,
       minVersion: 'TLSv1.2'
-    },
-    connectionTimeout: 15000, // 15 seconds (increased for production)
-    socketTimeout: 30000 // 30 seconds (increased for production)
-  });
+    }
+  };
+
+  if (useSSL) {
+    // Port 465 with SSL (more reliable on restricted networks like Render)
+    config.host = 'smtp.gmail.com';
+    config.port = 465;
+    config.secure = true;
+    config.connectionTimeout = 15000;
+    config.socketTimeout = 30000;
+  } else {
+    // Port 587 with STARTTLS (fallback)
+    config.host = 'smtp.gmail.com';
+    config.port = 587;
+    config.secure = false;
+    config.connectionTimeout = 15000;
+    config.socketTimeout = 30000;
+  }
+
+  console.log(`📧 Creating transporter: smtp.gmail.com:${config.port} (${useSSL ? 'SSL' : 'STARTTLS'})`);
+  return nodemailer.createTransport(config);
 };
 
 const motivationalLines = [
@@ -61,52 +75,85 @@ const motivationalLines = [
   "One step at a time."
 ];
 
-// Retry email sending with exponential backoff
+// Retry email sending with exponential backoff and port fallback
 const sendEmailWithRetry = async (mailOptions, maxRetries = 3) => {
   let lastError;
   
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-      const transporter = createTransporter();
-      const result = await transporter.sendMail(mailOptions);
-      console.log(`✅ Email sent successfully on attempt ${attempt}:`, {
-        to: mailOptions.to,
-        messageId: result.messageId
-      });
-      return result;
-    } catch (error) {
-      lastError = error;
-      console.error(`❌ Email send failed on attempt ${attempt}:`, {
-        to: mailOptions.to,
-        error: error.message,
-        code: error.code,
-        attempt
-      });
-      
-      // Don't retry on auth errors
-      if (error.code === 'EAUTH' || error.message?.includes('Invalid login')) {
-        throw error;
-      }
-      
-      // Wait before retry (exponential backoff: 1s, 3s, 7s)
-      if (attempt < maxRetries) {
-        const waitTime = Math.pow(2, attempt) - 1;
-        console.warn(`⏳ Retrying in ${waitTime}s...`);
-        await new Promise(resolve => setTimeout(resolve, waitTime * 1000));
+  // Try with STARTTLS first (port 587), then fallback to SSL (port 465)
+  const ports = [
+    { port: 587, ssl: false, name: 'STARTTLS' },
+    { port: 465, ssl: true, name: 'SSL' }
+  ];
+
+  for (const portConfig of ports) {
+    console.log(`\n📤 Attempting to send email via ${portConfig.name} (port ${portConfig.port})...`);
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const transporter = createTransporter(portConfig.ssl);
+        
+        // Check credentials first
+        console.log(`   [Attempt ${attempt}/${maxRetries}] Verifying credentials...`);
+        await transporter.verify();
+        console.log(`   ✅ Credentials verified`);
+        
+        console.log(`   [Attempt ${attempt}/${maxRetries}] Sending email...`);
+        const result = await transporter.sendMail(mailOptions);
+        console.log(`   ✅ Email sent successfully:`, {
+          to: mailOptions.to,
+          messageId: result.messageId,
+          via: `${portConfig.name}:${portConfig.port}`,
+          attempt
+        });
+        return result;
+      } catch (error) {
+        lastError = error;
+        console.error(`   ❌ [Attempt ${attempt}/${maxRetries}] Failed:`, {
+          error: error.message,
+          code: error.code,
+          to: mailOptions.to,
+          via: `${portConfig.name}:${portConfig.port}`
+        });
+        
+        // Auth errors = don't retry with this port
+        if (error.code === 'EAUTH' || error.message?.includes('Invalid login')) {
+          console.warn(`   ⚠️ Authentication failed - skipping to next port`);
+          break; // Break inner loop, try next port
+        }
+        
+        // Network errors might work with next port
+        if (error.code === 'ETIMEDOUT' || error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
+          console.warn(`   ⚠️ Connection issue - will try next port`);
+          break; // Break inner loop, try next port
+        }
+        
+        // For other errors, retry same port
+        if (attempt < maxRetries) {
+          const waitTime = Math.pow(2, attempt) - 1;
+          console.log(`   ⏳ Retrying in ${waitTime}s...`);
+          await new Promise(resolve => setTimeout(resolve, waitTime * 1000));
+        }
       }
     }
   }
   
-  throw lastError;
+  // If we get here, all attempts failed
+  console.error(`\n❌ Email sending failed after all retry attempts`);
+  throw lastError || new Error('Unknown email sending error');
 };
 
 // Send OTP email
 export const sendOtpEmail = async (email, otp) => {
   try {
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
-      console.warn('⚠️ Email credentials not configured: EMAIL_USER or EMAIL_PASSWORD missing');
+      console.error('❌ Email configuration missing:');
+      console.error('   EMAIL_USER:', process.env.EMAIL_USER ? '✅' : '❌ MISSING');
+      console.error('   EMAIL_PASSWORD:', process.env.EMAIL_PASSWORD ? '✅' : '❌ MISSING');
       return false;
     }
+
+    console.log(`\n📨 [OTP] Sending OTP to: ${email}`);
+    console.log(`   Sender: ${process.env.EMAIL_USER}`);
 
     const mailOptions = {
       from: process.env.EMAIL_USER,
@@ -135,11 +182,12 @@ export const sendOtpEmail = async (email, otp) => {
     await sendEmailWithRetry(mailOptions);
     return true;
   } catch (error) {
-    console.error('❌ Error sending OTP email after all retries:', {
+    console.error('❌ OTP Email Failed:', {
       email,
       error: error.message,
       code: error.code,
-      command: error.command
+      command: error.command,
+      errno: error.errno
     });
     return false;
   }
