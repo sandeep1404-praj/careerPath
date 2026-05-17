@@ -67,7 +67,7 @@
     }
   ],
   "variable": [
-    { "key": "baseUrl", "value": "http://localhost:5000" },
+    { "key": "baseUrl", "value": "https://careerpath-54sr.onrender.com" },
     { "key": "token", "value": "" }
   ]
 }

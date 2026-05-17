@@ -35,7 +35,7 @@ This frontend includes a complete authentication system with email verification:
    ```
 
 3. **Make sure the backend is running:**
-   - Backend should be running on `http://localhost:5000`
+   - Backend should be running on `https://careerpath-54sr.onrender.com`
    - Check the backend README for setup instructions
 
 ### Using the Authentication System
@@ -62,7 +62,7 @@ This frontend includes a complete authentication system with email verification:
 
 ### Environment Variables
 
-The frontend connects to the backend at `http://localhost:5000` by default. If you need to change this, update the `API_BASE_URL` in `src/services/api.js`.
+The frontend connects to the backend at `https://careerpath-54sr.onrender.com` by default. If you need to change this, update the `API_BASE_URL` in `src/services/api.js`.
 
 ### File Structure
 
