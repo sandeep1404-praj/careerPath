@@ -1,5 +1,20 @@
 import nodemailer from 'nodemailer';
 
+/**
+ * EMAIL SERVICE - RENDER OPTIMIZED (May 17, 2026)
+ * 
+ * FIXES FOR RENDER DEPLOYMENT:
+ * 1. Increased connection timeout: 15s → 60s (Render network is slower)
+ * 2. Increased socket timeout: 30s → 90s (Gmail takes time to respond)
+ * 3. Disabled connection pooling (pool: false) - causes issues on Render
+ * 4. Reversed port order: Try SSL (465) first, then STARTTLS (587)
+ * 5. Fixed retry logic: Retries timeouts instead of immediately breaking
+ * 6. Longer retry waits: 2s, 5s, 10s, 15s (instead of exponential)
+ * 7. Increased max retries: 3 → 4 attempts per port
+ * 
+ * RESULT: Handles slow Render network connections better
+ */
+
 // Email queue for async/non-blocking sends
 const emailQueue = [];
 let isProcessing = false;
@@ -38,32 +53,36 @@ const createTransporter = (useSSL = false) => {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASSWORD
     },
-    pool: true,
-    maxConnections: 5,
-    maxMessages: 20,
+    pool: false, // Disable pool on Render to avoid connection issues
+    maxConnections: 1,
+    maxMessages: 1,
     tls: {
       rejectUnauthorized: false,
-      minVersion: 'TLSv1.2'
+      minVersion: 'TLSv1.2',
+      // More relaxed TLS config for problematic networks
+      ciphers: 'DEFAULT'
     }
   };
 
   if (useSSL) {
-    // Port 465 with SSL (more reliable on restricted networks like Render)
+    // Port 465 with SSL
     config.host = 'smtp.gmail.com';
     config.port = 465;
     config.secure = true;
-    config.connectionTimeout = 15000;
-    config.socketTimeout = 30000;
+    // **RENDER FIX**: Increase timeouts significantly (Render is slow)
+    config.connectionTimeout = 60000; // 60 seconds (was 15s)
+    config.socketTimeout = 90000; // 90 seconds (was 30s)
   } else {
-    // Port 587 with STARTTLS (fallback)
+    // Port 587 with STARTTLS
     config.host = 'smtp.gmail.com';
     config.port = 587;
     config.secure = false;
-    config.connectionTimeout = 15000;
-    config.socketTimeout = 30000;
+    // **RENDER FIX**: Increase timeouts significantly
+    config.connectionTimeout = 60000; // 60 seconds (was 15s)
+    config.socketTimeout = 90000; // 90 seconds (was 30s)
   }
 
-  console.log(`📧 Creating transporter: smtp.gmail.com:${config.port} (${useSSL ? 'SSL' : 'STARTTLS'})`);
+  console.log(`📧 Creating transporter: smtp.gmail.com:${config.port} (${useSSL ? 'SSL' : 'STARTTLS'}, timeout: ${config.connectionTimeout / 1000}s)`);
   return nodemailer.createTransport(config);
 };
 
@@ -76,13 +95,14 @@ const motivationalLines = [
 ];
 
 // Retry email sending with exponential backoff and port fallback
-const sendEmailWithRetry = async (mailOptions, maxRetries = 3) => {
+const sendEmailWithRetry = async (mailOptions, maxRetries = 4) => {
   let lastError;
   
   // Try with STARTTLS first (port 587), then fallback to SSL (port 465)
+  // **RENDER FIX**: Reverse order - try SSL (465) first which is more reliable on Render
   const ports = [
-    { port: 587, ssl: false, name: 'STARTTLS' },
-    { port: 465, ssl: true, name: 'SSL' }
+    { port: 465, ssl: true, name: 'SSL' },
+    { port: 587, ssl: false, name: 'STARTTLS' }
   ];
 
   for (const portConfig of ports) {
@@ -115,23 +135,32 @@ const sendEmailWithRetry = async (mailOptions, maxRetries = 3) => {
           via: `${portConfig.name}:${portConfig.port}`
         });
         
-        // Auth errors = don't retry with this port
+        // Auth errors = don't retry, skip to next port
         if (error.code === 'EAUTH' || error.message?.includes('Invalid login')) {
           console.warn(`   ⚠️ Authentication failed - skipping to next port`);
           break; // Break inner loop, try next port
         }
         
-        // Network errors might work with next port
+        // **RENDER FIX**: For timeout/connection errors, RETRY same port with longer wait
+        // Don't immediately break - give it more attempts
         if (error.code === 'ETIMEDOUT' || error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
-          console.warn(`   ⚠️ Connection issue - will try next port`);
-          break; // Break inner loop, try next port
-        }
-        
-        // For other errors, retry same port
-        if (attempt < maxRetries) {
-          const waitTime = Math.pow(2, attempt) - 1;
-          console.log(`   ⏳ Retrying in ${waitTime}s...`);
-          await new Promise(resolve => setTimeout(resolve, waitTime * 1000));
+          if (attempt < maxRetries) {
+            // Longer wait times for Render timeouts: 2s, 5s, 10s, 15s
+            const waitTimes = [2, 5, 10, 15];
+            const waitTime = waitTimes[attempt - 1] || 15;
+            console.log(`   ⏳ Connection timeout - Retrying in ${waitTime}s (Attempt ${attempt + 1}/${maxRetries})...`);
+            await new Promise(resolve => setTimeout(resolve, waitTime * 1000));
+          } else {
+            console.warn(`   ⚠️ Max retries reached for ${portConfig.name} - trying next port`);
+            break; // Only break after all retries exhausted
+          }
+        } else {
+          // For other errors, retry same port
+          if (attempt < maxRetries) {
+            const waitTime = Math.pow(2, attempt) - 1;
+            console.log(`   ⏳ Retrying in ${waitTime}s...`);
+            await new Promise(resolve => setTimeout(resolve, waitTime * 1000));
+          }
         }
       }
     }
