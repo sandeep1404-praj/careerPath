@@ -228,7 +228,7 @@ curl -H "Origin: https://careerpathsan.netlify.app" \
      -H "Access-Control-Request-Method: POST" \
      -H "Access-Control-Request-Headers: Content-Type" \
      -X OPTIONS \
-     https://careerpath-54sr.onrender.com/api/auth/signup -v
+     http://localhost:5000/api/auth/signup -v
 ```
 
 Should return:
@@ -240,14 +240,14 @@ Access-Control-Allow-Headers: Content-Type, Authorization
 
 ### Test 2: Check Email DNS
 ```bash
-curl https://careerpath-54sr.onrender.com/api/test/check-email-config
+curl http://localhost:5000/api/test/check-email-config
 ```
 
 Should show DNS resolution attempt in logs.
 
 ### Test 3: Send OTP
 ```bash
-curl -X POST https://careerpath-54sr.onrender.com/api/auth/signup \
+curl -X POST http://localhost:5000/api/auth/signup \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Test User",

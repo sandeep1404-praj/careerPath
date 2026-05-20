@@ -48,6 +48,9 @@ router.post('/signup', setSignupTimeout, async (req, res) => {
     // Delete any previous OTP for this email
     await OTP.deleteMany({ email, purpose: 'signup' });
 
+    // Hash password and store in OTP record (avoid storing plain password)
+    const signupPasswordHash = await bcrypt.hash(password, 10);
+
     // Store OTP with user details (temporary storage)
     await OTP.create({
       email,
@@ -55,7 +58,7 @@ router.post('/signup', setSignupTimeout, async (req, res) => {
       expiry: otpExpiry,
       purpose: 'signup',
       signupName: name,
-      signupPassword: password // Store plain password temporarily
+      signupPasswordHash
     });
 
     // Send OTP email
@@ -106,7 +109,7 @@ router.post('/verify-signup-otp', async (req, res) => {
     }
 
     // Check if signup data exists
-    if (!otpRecord.signupName || !otpRecord.signupPassword) {
+    if (!otpRecord.signupName || !otpRecord.signupPasswordHash) {
       await OTP.deleteOne({ _id: otpRecord._id });
       return res.status(400).json({ message: 'Signup session expired. Please sign up again.' });
     }
@@ -118,14 +121,11 @@ router.post('/verify-signup-otp', async (req, res) => {
       return res.status(400).json({ message: 'User already exists' });
     }
 
-    // Hash password before storing
-    const hashedPassword = await bcrypt.hash(otpRecord.signupPassword, 10);
-
     // Create new user account
     const newUser = await User.create({
       name: otpRecord.signupName,
       email,
-      password: hashedPassword,
+      password: otpRecord.signupPasswordHash,
       isVerified: true
     });
 
