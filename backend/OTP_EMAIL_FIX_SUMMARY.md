@@ -142,7 +142,7 @@ EMAIL_PASSWORD=xudecceckqfaqqnz  # Gmail App Password (16 chars, no spaces)
 
 **To verify setup is working, use:**
 ```bash
-curl -X GET http://localhost:5000/api/test/check-email-config
+curl -X GET https://careerpath-54sr.onrender.com/api/test/check-email-config
 ```
 
 ---
@@ -171,7 +171,7 @@ curl -X GET http://localhost:5000/api/test/check-email-config
 
 ### Test 1: Signup with Email
 ```bash
-curl -X POST http://localhost:5000/api/auth/signup \
+curl -X POST https://careerpath-54sr.onrender.com/api/auth/signup \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Test User",
@@ -190,7 +190,7 @@ Expected response (if email configured):
 
 ### Test 2: Resend OTP
 ```bash
-curl -X POST http://localhost:5000/api/auth/resend-otp \
+curl -X POST https://careerpath-54sr.onrender.com/api/auth/resend-otp \
   -H "Content-Type: application/json" \
   -d '{
     "email": "test@example.com",
@@ -200,7 +200,7 @@ curl -X POST http://localhost:5000/api/auth/resend-otp \
 
 ### Test 3: Check Email Configuration
 ```bash
-curl -X GET http://localhost:5000/api/test/check-email-config
+curl -X GET https://careerpath-54sr.onrender.com/api/test/check-email-config
 ```
 
 Will show:
