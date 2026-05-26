@@ -8,6 +8,7 @@ import CustomTaskForm from './roadmap/CustomTaskForm.jsx';
 import RoadmapFlow from './roadmap/RoadmapFlow.jsx';
 import { RoadmapListSkeleton } from './SkeletonLoaders/RoadmapCardSkeleton.jsx';
 import { DetailRoadmapSkeleton } from './SkeletonLoaders/DetailRoadmapSkeleton.jsx';
+import { scrollToTop } from '@/utils/lenis';
 
 import {
   FaPalette, FaCog, FaSyncAlt, FaMobileAlt, FaWrench, FaChartBar, FaRobot,
@@ -88,7 +89,10 @@ function RoadmapPage() {
   const handlePageChange = useCallback((newPage) => {
     setCurrentPage(newPage);
     loadStaticRoadmaps(newPage, 10);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    scrollToTop({
+      duration: 1.1,
+      easing: (t) => 1 - Math.pow(1 - t, 3)
+    });
   }, [loadStaticRoadmaps]);
 
   const detailRoadmap = useMemo(() => 

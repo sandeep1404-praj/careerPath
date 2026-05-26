@@ -1,4 +1,5 @@
-import { Code, Database, BookOpen, ArrowRight, Clock, Users } from "lucide-react";
+import { Cloud, Code, Shield, ArrowRight, Clock, Users } from "lucide-react";
+import { Link } from "react-router-dom";
 import { useScrollAnimation } from "../hooks/useScrollAnimation";
 
 const RoadmapPreviewSection = () => {
@@ -6,31 +7,34 @@ const RoadmapPreviewSection = () => {
 
   const roadmaps = [
     {
+      icon: Cloud,
+      title: "Cloud Engineer Roadmap",
+      description: "Build cloud infrastructure skills with AWS, networking, and automation best practices.",
+      duration: "6-9 months",
+      students: "1,100+",
+      skills: ["AWS", "Linux", "Networking", "Terraform", "Monitoring"],
+      color: "from-sky-500 to-indigo-600",
+      path: "/roadmap/roadmap-10"
+    },
+    {
       icon: Code,
-      title: "Web Development",
-      description: "Full-stack development with React, Node.js, and modern technologies",
-      duration: "6-8 months",
-      students: "1,200+",
-      skills: ["HTML/CSS", "JavaScript", "React", "Node.js", "MongoDB"],
-      color: "from-blue-500 to-purple-600"
+      title: "Fullstack Developer Roadmap",
+      description: "Master modern frontend and backend development with full-stack tooling.",
+      duration: "7-10 months",
+      students: "1,400+",
+      skills: ["React", "Node.js", "APIs", "Databases", "Testing"],
+      color: "from-blue-500 to-purple-600",
+      path: "/roadmap/roadmap-03"
     },
     {
-      icon: Database,
-      title: "Data Science",
-      description: "Analytics, machine learning, and AI with Python and R",
-      duration: "8-10 months",
-      students: "850+",
-      skills: ["Python", "Statistics", "SQL", "Machine Learning", "Visualization"],
-      color: "from-green-500 to-teal-600"
-    },
-    {
-      icon: BookOpen,
-      title: "Government Exams",
-      description: "Comprehensive preparation for UPSC, SSC, Banking, and more",
-      duration: "12-18 months",
-      students: "2,500+",
-      skills: ["General Studies", "Current Affairs", "Mathematics", "Reasoning", "English"],
-      color: "from-orange-500 to-red-600"
+      icon: Shield,
+      title: "Cybersecurity Engineer Roadmap",
+      description: "Learn security fundamentals, threat analysis, and defense strategies.",
+      duration: "8-12 months",
+      students: "950+",
+      skills: ["Security Basics", "SIEM", "Threat Modeling", "Incident Response", "Compliance"],
+      color: "from-emerald-500 to-teal-600",
+      path: "/roadmap/roadmap-09"
     }
   ];
 
@@ -60,13 +64,13 @@ const RoadmapPreviewSection = () => {
             return (
               <div 
                 key={index} 
-                className={`bg-slate-900 rounded-2xl shadow-lg border border-slate-700 overflow-hidden hover:border-blue-400 hover:shadow-xl hover:shadow-blue-500/40 transition-all duration-700 ease-elastic group hover:-translate-y-2 hover:scale-105 ${
+                className={`bg-slate-900 rounded-2xl shadow-lg border border-slate-700 overflow-hidden hover:border-blue-400 hover:shadow-xl hover:shadow-blue-500/40 transition-all duration-1000 ease-smooth group hover:-translate-y-2 hover:scale-[1.03] ${
                   sectionVisible 
                     ? 'scale-100 opacity-100' 
-                    : 'scale-90 opacity-0'
+                    : 'scale-95 opacity-0'
                 }`}
                 style={{
-                  transitionDelay: `${index * 300}ms`
+                  transitionDelay: `${index * 220}ms`
                 }}
               >
                 {/* Header */}
@@ -111,10 +115,13 @@ const RoadmapPreviewSection = () => {
                   </div>
                   
                   {/* CTA */}
-                  <button className="btn btn-outline w-full border-2 border-slate-600 hover:border-blue-400 text-gray-300 hover:text-white py-4 rounded-xl font-semibold transition-all duration-500 ease-smooth group-hover:bg-blue-500/10 hover:scale-105">
+                  <Link
+                    to={roadmap.path}
+                    className="btn btn-outline w-full border-2 border-slate-600 hover:border-blue-400 text-gray-300 hover:text-white py-4 rounded-xl font-semibold transition-all duration-700 ease-smooth group-hover:bg-blue-500/10 hover:scale-[1.02]"
+                  >
                     View Roadmap
                     <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform duration-300" />
-                  </button>
+                  </Link>
                 </div>
               </div>
             );

@@ -175,9 +175,14 @@
     @apply border-border;
   }
 
-  /* Smooth scrolling for better animation experience */
+  /* Lenis handles smooth scrolling globally */
   html {
-    scroll-behavior: smooth;
+    scroll-behavior: auto;
+  }
+
+  html.lenis,
+  body.lenis {
+    height: auto;
   }
 
   body {

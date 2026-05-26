@@ -5,7 +5,7 @@ import HowItWorksSection from "@/components/HowItWorksSection";
 import RoadmapPreviewSection from "@/components/RoadmapPreviewSection";
 import BlogSection from "@/components/BlogSection";
 import CTASection from "@/components/CTASection";
-import ChatbotButton from "@/components/ChatbotButton";
+// import ChatbotButton from "@/components/ChatbotButton";
 // import ScrollToTop from "../components/animation/ScrollToTop";
 import SplashCursor from "../components/ui/SplashCursor";
 // import Footer from "@/components/Footer";
@@ -22,7 +22,7 @@ const Index = () => {
       <RoadmapPreviewSection />
       <BlogSection />
       <CTASection />
-      <ChatbotButton />
+      {/* <ChatbotButton /> */}
     </div>
   );
 };

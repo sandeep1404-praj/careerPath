@@ -1,4 +1,4 @@
-const API_BASE_URL = 'https://careerpath-54sr.onrender.com/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://careerpath-54sr.onrender.com/api';
 
 // Helper function for API requests
 const apiRequest = async (endpoint, options = {}) => {
