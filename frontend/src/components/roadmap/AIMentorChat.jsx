@@ -600,6 +600,7 @@ const AIMentorChat = ({ token, onRoadmapGenerated, seedConversation, conversatio
 
 		setError('');
 		setIsGenerating(true);
+		
 
 		try {
 			const response = await aiAPI.generateRoadmap({
@@ -624,7 +625,7 @@ const AIMentorChat = ({ token, onRoadmapGenerated, seedConversation, conversatio
 	};
 
 	return (
-		<div className="bg-gray-800/70 border border-gray-700 rounded-xl p-5 flex flex-col h-[calc(100vh-240px)] min-h-[1060px]">
+		<div className="bg-gray-800/70 border border-gray-700 rounded-xl p-5 flex flex-col h-[calc(100vh-240px)] min-h-[1060px] min-h-0 overflow-hidden">
 			<div className="flex items-center justify-between mb-4">
 				<h3 className="text-lg font-semibold text-white">AI Career Mentor</h3>
 				<button
@@ -636,7 +637,7 @@ const AIMentorChat = ({ token, onRoadmapGenerated, seedConversation, conversatio
 				</button>
 			</div>
 
-			<div ref={messagesRef} className="flex-1 overflow-y-auto bg-gray-900/70 rounded-lg p-5 border border-gray-700 space-y-5 scroll-smooth">
+			<div ref={messagesRef} className="flex-1 min-h-0 overflow-y-auto bg-gray-900/70 rounded-lg p-5 border border-gray-700 space-y-5 scroll-smooth" data-lenis-prevent data-lenis-prevent-wheel data-lenis-prevent-touch>
 				{messages.map((message, index) =>
 					message.role === 'assistant' ? (
 						<div key={`assistant-${index}`} className="flex items-start gap-4 animate-fadeIn group">

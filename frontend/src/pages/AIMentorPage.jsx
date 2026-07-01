@@ -217,6 +217,14 @@ const AIMentorPage = () => {
       fromCache: Boolean(fromCache),
       error: error || ''
     });
+
+    if (roadmap) {
+      toast.success('Roadmap generated. It is below.');
+    }
+
+    if (roadmap) {
+      toast.success('Roadmap generated successfully');
+    }
   };
 
   const handleAcceptAiRoadmap = async () => {

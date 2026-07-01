@@ -61,7 +61,7 @@ All email functions work exactly the same, but now use Resend API:
 ### Test with Resend Default Domain
 
 ```bash
-curl -X POST https://careerpath-54sr.onrender.com/api/test/test-email \
+curl -X POST http://localhost:5000/api/test/test-email \
   -H "Content-Type: application/json" \
   -d '{
     "email": "your-email@example.com",

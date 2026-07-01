@@ -1,4 +1,5 @@
-# CareerCompass Backend
+# 
+    CareerCompass Backend
 
 ## Email Verification Setup
 
@@ -31,26 +32,27 @@ PORT=5000
 For testing without email verification:
 
 1. **Install dependencies:**
+
    ```bash
    npm install
    ```
-
 2. **Start MongoDB** (if not already running):
+
    ```bash
    # On Windows (if using MongoDB Community)
    "C:\Program Files\MongoDB\Server\6.0\bin\mongod.exe"
-   
+
    # Or use MongoDB Atlas (cloud)
    # Update MONGODB_URI in .env to your Atlas connection string
    ```
-
 3. **Start the server:**
+
    ```bash
    npm run dev
    ```
-
 4. **Test the connection:**
-   - Visit: `https://careerpath-54sr.onrender.com/api/health`
+
+   - Visit: `http://localhost:5000/api/health`
    - Should return: `{"status":"OK","message":"Server is running"}`
 
 ### Gmail Setup (Optional)
@@ -67,49 +69,59 @@ To use Gmail for sending emails, you need to:
 ### API Endpoints
 
 #### Health Check
+
 - **GET** `/api/health`
 - Returns server status
 
 #### Signup
+
 - **POST** `/api/auth/signup`
 - Creates user account and sends verification email
 - Body: `{ name, email, password }`
 
 #### Verify Email
+
 - **GET** `/api/auth/verify-email/:token`
 - Verifies user email using the token from the email
 
 #### Resend Verification
+
 - **POST** `/api/auth/resend-verification`
 - Resends verification email if the original expires
 - Body: `{ email }`
 
 #### Login
+
 - **POST** `/api/auth/login`
 - Login (requires email verification)
 - Body: `{ email, password }`
 
 #### Profile
+
 - **GET** `/api/auth/profile`
 - Get user profile (requires authentication)
 - Headers: `Authorization: Bearer <token>`
 
 #### Test
+
 - **GET** `/api/auth/test`
 - Test endpoint to verify auth routes are working
 
 #### AI Mentor Chat
+
 - **POST** `/api/ai/chat`
 - Protected endpoint (Bearer token required)
 - Body: `{ userMessage }`
 
 #### AI Roadmap Preview Generation
+
 - **POST** `/api/ai/generate-roadmap`
 - Protected endpoint (Bearer token required)
 - Body: `{ userMessage }`
 - Uses Gemini key rotation flow: Gemini key 1 → key 2 → key 3 → internal fallback roadmap
 
 #### AI Roadmap Accept
+
 - **POST** `/api/ai/accept-roadmap`
 - Protected endpoint (Bearer token required)
 - Body: `{ roadmap }` where `roadmap` follows the generated roadmap schema
@@ -133,7 +145,8 @@ Import the file:
 - `AI_Mentor_API.postman_collection.json`
 
 Set Postman variables before running:
-- `baseUrl` → `https://careerpath-54sr.onrender.com`
+
+- `baseUrl` → `http://localhost:5000`
 - `token` → your JWT token
 
 ### Troubleshooting
@@ -141,20 +154,21 @@ Set Postman variables before running:
 #### Common Issues:
 
 1. **"Cannot connect to server"**
+
    - Make sure the backend is running: `npm run dev`
    - Check if port 5000 is available
    - Verify MongoDB is running
-
 2. **"MongoDB connection error"**
+
    - Check your `MONGODB_URI` in `.env`
    - Make sure MongoDB is running locally or Atlas is accessible
    - Try: `mongodb://localhost:27017/careercompass`
-
 3. **"CORS error"**
+
    - Backend CORS is configured for `http://localhost:5173`
    - Make sure frontend is running on the correct port
-
 4. **"Email verification failed"**
+
    - Check email credentials in `.env`
    - Or test without email setup (signup will still work)
 
@@ -163,12 +177,13 @@ Set Postman variables before running:
 If you don't want to set up email verification for testing:
 
 1. Comment out the email sending in `routes/auth.js`:
+
    ```javascript
    // Comment out this line in signup route:
    // const emailSent = await sendVerificationEmail(email, verificationToken);
    ```
-
 2. Or manually verify users in MongoDB:
+
    ```javascript
    // In MongoDB shell or Compass:
    db.users.updateOne(
@@ -199,4 +214,4 @@ npm run dev
 - ✅ Password reset email functionality (ready for future use)
 - ✅ Health check endpoint
 - ✅ Better error handling
-- ✅ CORS configuration 
+- ✅ CORS configuration

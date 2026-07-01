@@ -164,7 +164,7 @@ The signup process has been completely rewritten with a cleaner, more straightfo
 
 ### Test Signup:
 ```bash
-curl -X POST https://careerpath-54sr.onrender.com/api/auth/signup \
+curl -X POST http://localhost:5000/api/auth/signup \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Test User",
@@ -175,7 +175,7 @@ curl -X POST https://careerpath-54sr.onrender.com/api/auth/signup \
 
 ### Test OTP Verification:
 ```bash
-curl -X POST https://careerpath-54sr.onrender.com/api/auth/verify-signup-otp \
+curl -X POST http://localhost:5000/api/auth/verify-signup-otp \
   -H "Content-Type: application/json" \
   -d '{
     "email": "test@example.com",
@@ -185,7 +185,7 @@ curl -X POST https://careerpath-54sr.onrender.com/api/auth/verify-signup-otp \
 
 ### Test Login:
 ```bash
-curl -X POST https://careerpath-54sr.onrender.com/api/auth/login \
+curl -X POST http://localhost:5000/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "test@example.com",

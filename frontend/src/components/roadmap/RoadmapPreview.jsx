@@ -4,7 +4,7 @@ const RoadmapPreview = ({ roadmap, provider, fromCache, onAccept, accepting }) =
 	if (!roadmap) return null;
 
 	return (
-		<div className="bg-gray-800/70 border border-gray-700 rounded-xl p-5 mt-6">
+		<div className="bg-gray-800/70 border border-gray-700 rounded-xl p-5 mt-6 flex flex-col min-h-0 overflow-hidden">
 			<div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
 				<div>
 					<h3 className="text-xl font-bold text-white">{roadmap.name}</h3>
@@ -18,7 +18,7 @@ const RoadmapPreview = ({ roadmap, provider, fromCache, onAccept, accepting }) =
 				</div>
 			</div>
 
-			<div className="space-y-3 max-h-[500px] overflow-y-auto pr-1">
+			<div className="space-y-3 max-h-[500px] min-h-0 overflow-y-auto pr-1" data-lenis-prevent data-lenis-prevent-wheel data-lenis-prevent-touch>
 				{(roadmap.tasks || []).map((task) => (
 					<div key={task.id} className="bg-gray-900/70 border border-gray-700 rounded-lg p-4">
 						<div className="flex flex-wrap items-center justify-between gap-2 mb-2">
