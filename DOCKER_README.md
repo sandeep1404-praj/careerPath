@@ -12,7 +12,7 @@ This repo includes a docker.yml file that starts the full stack with one command
 ## Ports
 
 - Frontend: http://localhost:5173
-- Backend: http://localhost:5000
+- Backend: https://careerpath-54sr.onrender.com
 - MongoDB: localhost:27017
 - Redis: localhost:6379
 
@@ -26,7 +26,7 @@ docker compose -f docker.yml up --build
 
 Then open:
 - Frontend: http://localhost:5173
-- Backend health: http://localhost:5000/health
+- Backend health: https://careerpath-54sr.onrender.com/health
 
 ## Stop and clean up
 
@@ -47,7 +47,7 @@ The docker.yml file sets safe defaults for local development:
 - MONGODB_URI: mongodb://mongo:27017/careercompass
 - JWT_SECRET: dev_jwt_secret_change_me
 - FRONTEND_URL / FRONTEND_ORIGIN: http://localhost:5173
-- VITE_API_BASE_URL: http://localhost:5000/api
+- VITE_API_BASE_URL: https://careerpath-54sr.onrender.com/api
 - REDIS_HOST / REDIS_PORT: redis / 6379
 
 If you want AI or email features, add these under the backend service in docker.yml:

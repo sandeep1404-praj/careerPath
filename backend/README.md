@@ -52,7 +52,7 @@ For testing without email verification:
    ```
 4. **Test the connection:**
 
-   - Visit: `http://localhost:5000/api/health`
+   - Visit: `https://careerpath-54sr.onrender.com/api/health`
    - Should return: `{"status":"OK","message":"Server is running"}`
 
 ### Gmail Setup (Optional)
@@ -146,7 +146,7 @@ Import the file:
 
 Set Postman variables before running:
 
-- `baseUrl` → `http://localhost:5000`
+- `baseUrl` → `https://careerpath-54sr.onrender.com`
 - `token` → your JWT token
 
 ### Troubleshooting

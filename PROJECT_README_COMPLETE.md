@@ -135,7 +135,7 @@ Email env (Resend):
 ### Frontend (`frontend/.env`)
 Frontend uses Vite env:
 - `VITE_API_BASE_URL`
-  - default in code: `http://localhost:5000/api`
+  - default in code: `https://careerpath-54sr.onrender.com/api`
 
 ---
 
@@ -664,7 +664,7 @@ In `backend/routes/roadmap.js`:
 
 ### Frontend Dashboard page is legacy-ish
 `frontend/src/pages/Dashboard.jsx` fetches:
-- `http://localhost:5000/api/roadmaps` (note: backend uses `/api/roadmaps/*`, so this may rely on legacy route mapping).
+- `https://careerpath-54sr.onrender.com/api/roadmaps` (note: backend uses `/api/roadmaps/*`, so this may rely on legacy route mapping).
 
 ---
 
